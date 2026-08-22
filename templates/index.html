@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusDeck</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.12/htmx.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>FocusDeck</h1>
+      <p class="tagline">One question. One answer. Get moving.</p>
+    </header>
+
+    <section class="what-now-card">
+      <button
+        class="what-now-btn"
+        hx-get="/api/what-now"
+        hx-target="#what-now-result"
+        hx-swap="innerHTML">
+        What should I do now?
+      </button>
+      <div class="manual-override">
+        <label for="manual-minutes">Or tell me your free minutes:</label>
+        <input type="number" id="manual-minutes" placeholder="e.g. 45" min="1">
+        <button
+          class="secondary-btn"
+          hx-get="/api/what-now"
+          hx-include="#manual-minutes"
+          hx-vals='js:{manual_minutes: document.getElementById("manual-minutes").value || null}'
+          hx-target="#what-now-result">
+          Use this
+        </button>
+      </div>
+      <div id="what-now-result"></div>
+    </section>
+
+    <section class="add-task-card">
+      <h2>Add Task</h2>
+      <form
+        hx-post="/api/tasks"
+        hx-target="#task-list"
+        hx-swap="innerHTML"
+        _="on htmx:afterRequest reset() me">
+        <div class="form-row">
+          <input type="text" name="title" placeholder="What needs doing?" required autofocus>
+        </div>
+        <div class="form-row">
+          <select name="project_id" id="project-select">
+            <option value="">No project</option>
+            {% for p in projects %}
+            <option value="{{ p.id }}">{{ p.name }}</option>
+            {% endfor %}
+          </select>
+          <input type="text" id="new-project-name" placeholder="...or new project name">
+          <button
+            type="button"
+            class="secondary-btn small"
+            hx-post="/api/projects"
+            hx-include="#new-project-name"
+            hx-target="#project-select"
+            hx-swap="outerHTML">
+            +
+          </button>
+        </div>
+        <div class="form-row">
+          <select name="priority">
+            <option value="1">🔴 Urgent</option>
+            <option value="2" selected>🟡 Normal</option>
+            <option value="3">🟢 Low</option>
+          </select>
+          <input type="number" name="estimated_minutes" placeholder="Minutes" value="30" min="5">
+          <input type="datetime-local" name="deadline">
+        </div>
+        <div class="form-row">
+          <input type="text" name="notes" placeholder="Notes (optional)">
+        </div>
+        <button type="submit" class="primary-btn">Add Task</button>
+      </form>
+    </section>
+
+    <section class="tasks-card">
+      <h2>Open Tasks</h2>
+      <div id="task-list" hx-get="/api/tasks" hx-trigger="load"></div>
+    </section>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.12/ext/json-enc.js"></script>
+</body>
+</html>

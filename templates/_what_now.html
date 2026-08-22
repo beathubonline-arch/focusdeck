@@ -1,0 +1,31 @@
+{% if not pick %}
+<p class="empty">Nothing on your list. Add a task above, or take a break.</p>
+{% else %}
+<div class="what-now-result">
+  <div class="free-time-note">
+    {% if source == "calendar" %}📅{% elif source == "manual" %}✍️{% else %}⏱️{% endif %}
+    {{ free_minutes }} minutes free
+    {% if source == "default" and not calendar_configured %}
+      <span class="hint">(default — connect Google Calendar for real gaps)</span>
+    {% endif %}
+  </div>
+
+  <div class="top-pick">
+    <span class="label">Do this now:</span>
+    <span class="pick-title">{{ pick.title }}</span>
+    {% if pick.project %}<span class="pick-project">{{ pick.project.name }}</span>{% endif %}
+    <span class="pick-minutes">~{{ pick.estimated_minutes }} min</span>
+  </div>
+
+  {% if runners_up %}
+  <div class="runners-up">
+    <span class="label">Also worth considering:</span>
+    <ul>
+      {% for r in runners_up %}
+      <li>{{ r.title }}{% if r.project %} <em>({{ r.project.name }})</em>{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+{% endif %}

@@ -1,0 +1,36 @@
+{% if not tasks %}
+<p class="empty">No open tasks. Add one above.</p>
+{% else %}
+<ul class="task-items">
+  {% for t in tasks %}
+  <li class="task-item priority-{{ t.priority }}">
+    <div class="task-main">
+      <span class="task-title">{{ t.title }}</span>
+      {% if t.project %}<span class="task-project" style="border-color: {{ t.project.color }};">{{ t.project.name }}</span>{% endif %}
+    </div>
+    <div class="task-meta">
+      <span>{{ t.estimated_minutes }} min</span>
+      {% if t.deadline %}<span class="deadline">due {{ t.deadline.strftime('%b %d, %H:%M') }}</span>{% endif %}
+      {% if t.notes %}<span class="notes">{{ t.notes }}</span>{% endif %}
+    </div>
+    <div class="task-actions">
+      <button
+        class="done-btn"
+        hx-post="/api/tasks/{{ t.id }}/done"
+        hx-target="#task-list"
+        hx-swap="innerHTML">
+        ✓ Done
+      </button>
+      <button
+        class="delete-btn"
+        hx-post="/api/tasks/{{ t.id }}/delete"
+        hx-target="#task-list"
+        hx-swap="innerHTML"
+        hx-confirm="Delete this task?">
+        ✕
+      </button>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}

@@ -1,0 +1,6 @@
+<select name="project_id" id="project-select">
+  <option value="">No project</option>
+  {% for p in projects %}
+  <option value="{{ p.id }}">{{ p.name }}</option>
+  {% endfor %}
+</select>

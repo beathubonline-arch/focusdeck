@@ -242,7 +242,10 @@ async def startup_self_test():
                 top = jobs[0]
                 pack = application_pack(top)
                 ok = bool(top.get("url")) and bool(pack.get("summary")) and bool(pack.get("cover_letter"))
-                print(f"SELFTEST {run}: {'PASS' if ok else 'FAIL'} - jobs={len(jobs)} top={top.get('title')} score={top.get('score')} cv_pack={bool(pack.get('summary'))}", flush=True)
+                ui = await home(0, 55)
+                body = ui.body.decode("utf-8", errors="ignore")
+                ui_ok = ("Tailored CV" in body and "Application pack" in body and top.get("title","") in body)
+                print(f"SELFTEST {run}: {'PASS' if ok and ui_ok else 'FAIL'} - jobs={len(jobs)} top={top.get('title')} score={top.get('score')} cv_pack={bool(pack.get('summary'))} ui={ui_ok}", flush=True)
         except Exception as e:
             print(f"SELFTEST {run}: FAIL - {type(e).__name__}: {e}", flush=True)
         await asyncio.sleep(2)

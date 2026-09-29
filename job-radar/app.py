@@ -249,20 +249,82 @@ async def api_jobs(refresh:int=0, min_score:int=35):
 async def home():
     return HTMLResponse("""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Anthony Job Radar</title>
 <style>
-:root{--bg1:#f8fbff;--bg2:#eef4ff;--bg3:#f6f8fc;--panel:#ffffff;--text:#182230;--muted:#66758a;--line:#e3ebf5;--good:#16a34a;--warn:#d97706;--accent:#3b82f6;--accent2:#2563eb;--shadow:0 10px 30px rgba(16,24,40,.08);--shadow2:0 6px 18px rgba(16,24,40,.05)}
+:root{
+  --forest:#123524;--forest-2:#1f5a3c;--emerald:#2f8f57;--lime:#b7d94b;--sun:#f6d84a;
+  --cream:#fffdf3;--paper:#ffffff;--ink:#173126;--muted:#6e7d73;--line:#e6eadc;
+  --soft-green:#eef8ee;--soft-yellow:#fff8cf;--shadow:0 14px 36px rgba(32,73,48,.10);
+  --shadow-soft:0 8px 22px rgba(32,73,48,.07)
+}
 *{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;color:var(--text);background:radial-gradient(circle at top left,rgba(59,130,246,.12),transparent 30%),radial-gradient(circle at top right,rgba(14,165,233,.10),transparent 25%),linear-gradient(180deg,var(--bg1),var(--bg2) 48%,var(--bg3));min-height:100vh}
-.wrap{max-width:1320px;margin:auto;padding:30px 22px 44px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center}.brand h1{margin:0;font-size:32px;letter-spacing:-.03em}.brand p{margin:6px 0;color:var(--muted);font-size:15px}
-.btn{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:12px;padding:10px 14px;cursor:pointer;text-decoration:none;display:inline-block;font-weight:650;box-shadow:var(--shadow2);transition:.2s ease}.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:22px 0 18px}.stat{background:rgba(255,255,255,.88);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.8);padding:18px;border-radius:18px;box-shadow:var(--shadow2)}.stat b{font-size:28px;display:block}.stat span{color:var(--muted);font-size:13px}
-.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:rgba(255,255,255,.88);backdrop-filter:blur(12px);padding:14px;border:1px solid rgba(255,255,255,.8);border-radius:18px;box-shadow:var(--shadow2)}.controls input,.controls select{background:#fff;color:var(--text);border:1px solid var(--line);padding:10px 12px;border-radius:12px;min-height:42px;outline:none}.controls input:focus,.controls select:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(59,130,246,.12)}
-.layout{display:grid;grid-template-columns:1fr 310px;gap:18px;margin-top:18px}.jobs{display:grid;gap:14px}.card{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.85);border-radius:20px;padding:18px;box-shadow:var(--shadow2);transition:.2s ease}.card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
-.row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.title{font-weight:800;font-size:18px;line-height:1.3}.meta{color:var(--muted);font-size:13px;margin:6px 0 10px}.chips{display:flex;gap:7px;flex-wrap:wrap}.chip{font-size:12px;padding:5px 9px;border-radius:999px;background:#edf4ff;color:#2457a6;border:1px solid #d9e7ff;font-weight:600}
-.score{font-weight:800;font-size:15px;min-width:78px;text-align:center;padding:8px 10px;border-radius:999px;background:#f8fafc;border:1px solid var(--line)}.excellent{color:#15803d;background:#ecfdf3;border-color:#bbf7d0}.strong{color:#0369a1;background:#eff6ff;border-color:#bfdbfe}.possible{color:#b45309;background:#fff7ed;border-color:#fed7aa}.stretch{color:#6d28d9;background:#f5f3ff;border-color:#ddd6fe}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.side{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.85);border-radius:20px;padding:18px;height:max-content;position:sticky;top:15px;box-shadow:var(--shadow2)}.side h3{margin-top:0}.source{display:block;color:#2457a6;text-decoration:none;padding:10px 0;border-bottom:1px solid var(--line);font-weight:600}.source:hover{color:var(--accent2)}.small{font-size:12px;color:var(--muted);line-height:1.5}.empty{padding:44px 20px;text-align:center;color:var(--muted);background:rgba(255,255,255,.7);border:1px dashed var(--line);border-radius:18px}#updated{margin-left:auto}
-@media(max-width:850px){.stats{grid-template-columns:1fr 1fr}.layout{grid-template-columns:1fr}.side{position:static}}@media(max-width:560px){.stats{grid-template-columns:1fr}.top{flex-direction:column;align-items:flex-start}.brand h1{font-size:28px}}
+body{
+  margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);
+  background:
+    radial-gradient(circle at 8% 0%,rgba(183,217,75,.32),transparent 31%),
+    radial-gradient(circle at 92% 4%,rgba(47,143,87,.18),transparent 28%),
+    linear-gradient(180deg,#fffef8 0%,#f5f8e9 48%,#edf6ee 100%);
+  min-height:100vh
+}
+.wrap{max-width:1340px;margin:auto;padding:28px 22px 46px}
+.top{
+  position:relative;overflow:hidden;display:flex;justify-content:space-between;gap:24px;align-items:center;
+  padding:26px 28px;border-radius:26px;
+  background:linear-gradient(125deg,var(--forest) 0%,var(--forest-2) 62%,#5e7f2d 100%);
+  box-shadow:0 18px 42px rgba(25,70,43,.18);color:#fff
+}
+.top:after{content:"";position:absolute;right:-70px;top:-95px;width:260px;height:260px;border-radius:50%;background:rgba(246,216,74,.17)}
+.brand{position:relative;z-index:1}
+.eyebrow{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.12);font-size:12px;font-weight:750;color:#f7ef9b;margin-bottom:10px}
+.brand h1{margin:0;font-size:34px;letter-spacing:-.035em;color:#fff}
+.brand p{margin:7px 0 0;color:#dcebdc;font-size:15px}
+.btn{
+  border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:10px 14px;cursor:pointer;
+  text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-weight:720;box-shadow:var(--shadow-soft);transition:.2s ease
+}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn.primary{background:linear-gradient(135deg,var(--sun),#f4c93d);color:#294116;border-color:#eed03f}
+.top .btn.primary{position:relative;z-index:1;min-width:128px;font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}
+.stat{
+  position:relative;overflow:hidden;background:rgba(255,255,255,.93);border:1px solid rgba(230,234,220,.95);
+  padding:18px 18px 17px;border-radius:19px;box-shadow:var(--shadow-soft)
+}
+.stat:before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:linear-gradient(180deg,var(--emerald),var(--sun))}
+.stat b{font-size:29px;display:block;letter-spacing:-.03em}.stat span{color:var(--muted);font-size:13px;font-weight:650}
+.controls{
+  display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:rgba(255,255,255,.92);padding:13px;
+  border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-soft)
+}
+.controls input,.controls select{background:#fffef8;color:var(--ink);border:1px solid #dfe7d6;padding:10px 12px;border-radius:11px;min-height:42px;outline:none}
+.controls input{min-width:250px;flex:1}
+.controls input:focus,.controls select:focus{border-color:var(--emerald);box-shadow:0 0 0 4px rgba(47,143,87,.10)}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;margin-top:18px}
+.jobs{display:grid;gap:13px}
+.card{
+  position:relative;background:rgba(255,255,255,.95);border:1px solid #e4eadc;border-radius:20px;padding:19px;
+  box-shadow:var(--shadow-soft);transition:.2s ease;overflow:hidden
+}
+.card:after{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--emerald),var(--lime),var(--sun))}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.row{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.title{font-weight:850;font-size:18px;line-height:1.28;letter-spacing:-.01em}
+.meta{color:var(--muted);font-size:13px;margin:6px 0 11px}.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{font-size:12px;padding:5px 9px;border-radius:999px;background:var(--soft-green);color:#28633f;border:1px solid #d4ead4;font-weight:650}
+.score{font-weight:850;font-size:14px;min-width:80px;text-align:center;padding:8px 10px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.excellent{color:#185d31;background:#e9f7e8;border-color:#bde1bd}.strong{color:#536614;background:#f5f9db;border-color:#dde9a8}
+.possible{color:#7a5d08;background:var(--soft-yellow);border-color:#f0df8a}.stretch{color:#7e6131;background:#fff3df;border-color:#eed5ae}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.side{
+  background:linear-gradient(180deg,#173a29,#234d35);color:#fff;border-radius:22px;padding:18px;height:max-content;
+  position:sticky;top:15px;box-shadow:0 15px 34px rgba(29,68,44,.17)
+}
+.side h3{margin:0 0 9px;font-size:16px;color:#fff}.side .small{color:#cadccb}
+.source{display:flex;justify-content:space-between;color:#eef7df;text-decoration:none;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.11);font-weight:650}
+.source:hover{color:#ffe96c}.small{font-size:12px;color:var(--muted);line-height:1.5}
+.empty{padding:48px 20px;text-align:center;color:var(--muted);background:rgba(255,255,255,.78);border:1px dashed #d9e3cf;border-radius:20px}
+#updated{margin-left:auto;background:#f8f8ea;padding:7px 10px;border-radius:999px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.side{position:static}.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:590px){.wrap{padding:16px 12px 28px}.top{padding:22px 18px;align-items:flex-start;flex-direction:column}.brand h1{font-size:29px}.stats{grid-template-columns:1fr 1fr}.controls input{min-width:100%}.btn{padding:9px 11px}.stat{padding:15px}}
 </style></head><body><div class="wrap">
-<div class="top"><div class="brand"><h1>Anthony Job Radar</h1><p>Best-fit jobs first. Review → tailor → apply.</p></div><button class="btn primary" onclick="loadJobs(true)">Scan now</button></div>
+<div class="top"><div class="brand"><div class="eyebrow">● LIVE CAREER RADAR</div><h1>Anthony Job Radar</h1><p>High-fit roles first. Tailored CV ready. You review and apply.</p></div><button class="btn primary">Scan now</button></div>
 <div class="stats"><div class="stat"><b id="excellent">0</b><span>Excellent fit</span></div><div class="stat"><b id="strong">0</b><span>Strong fit</span></div><div class="stat"><b id="applied">0</b><span>Marked applied</span></div><div class="stat"><b id="total">0</b><span>Live matches</span></div></div>
 <div class="controls"><input id="q" placeholder="Search title, company, skill…" oninput="render()"><select id="min" onchange="render()"><option value="55">55%+ fit</option><option value="68" selected>68%+ strong</option><option value="82">82%+ excellent</option></select><select id="status" onchange="render()"><option value="">All statuses</option><option value="new">New</option><option value="saved">Saved</option><option value="applied">Applied</option><option value="ignored">Ignored</option></select><span class="small" id="updated"></span></div>
 <div class="layout"><main class="jobs" id="jobs"><div class="empty">Scanning live job feeds…</div></main>

@@ -231,9 +231,26 @@ async def background_scanner():
             pass
         await asyncio.sleep(1800)
 
+async def startup_self_test():
+    await asyncio.sleep(2)
+    for run in (1, 2):
+        try:
+            jobs = await scan(True)
+            if not jobs:
+                print(f"SELFTEST {run}: FAIL - no live jobs returned", flush=True)
+            else:
+                top = jobs[0]
+                pack = application_pack(top)
+                ok = bool(top.get("url")) and bool(pack.get("summary")) and bool(pack.get("cover_letter"))
+                print(f"SELFTEST {run}: {'PASS' if ok else 'FAIL'} - jobs={len(jobs)} top={top.get('title')} score={top.get('score')} cv_pack={bool(pack.get('summary'))}", flush=True)
+        except Exception as e:
+            print(f"SELFTEST {run}: FAIL - {type(e).__name__}: {e}", flush=True)
+        await asyncio.sleep(2)
+
 @app.on_event("startup")
 async def start_background_scanner():
     asyncio.create_task(background_scanner())
+    asyncio.create_task(startup_self_test())
 
 @app.get("/health")
 async def health():

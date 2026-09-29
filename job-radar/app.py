@@ -1,8 +1,13 @@
-import asyncio, re, time
+import asyncio, re, time, io
 from datetime import datetime, timezone
 import httpx
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse, StreamingResponse
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, ListFlowable, ListItem
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib import colors
 
 app = FastAPI(title="Anthony Job Radar")
 CACHE={"ts":0,"jobs":[]}
@@ -74,6 +79,150 @@ async def scan(force=False):
     CACHE.update(ts=now,jobs=jobs)
     return jobs
 
+
+PROFILE = {
+    "name":"Anthony Kipkoech Bii",
+    "headline":"AI Automation & Applications Specialist | Telecommunications Engineer",
+    "location":"Nairobi, Kenya",
+    "phone":"+254 720 050 886",
+    "email":"anthonybii2021@gmail.com",
+    "linkedin":"linkedin.com/in/anthony-bii-26a9a0348",
+    "portfolio":"signalworks.ai",
+    "github":"github.com/anthonybii2021-boop",
+    "education":"Bachelor of Engineering - Electrical & Telecommunications Engineering, Moi University",
+    "certs":[
+        "Artificial Intelligence for Trainers - Microsoft Elevate (2026)",
+        "Certified Trainer - Women in Digital Business (WIDB), ILO / ITC / Microsoft (2025)"
+    ]
+}
+
+BASE_EXPERIENCE = [
+    ("Founder & AI Automation / Agent Developer", "Independent / SignalWorks | 2026 - Present", [
+        "Design and build AI-enabled workflows and agents for customer support, scheduling, lead qualification, follow-up and operational decision support.",
+        "Integrate applications with email, calendars, messaging, APIs and relational databases to reduce manual hand-offs.",
+        "Test critical workflows against edge cases, diagnose failures from logs and outputs, and refine systems before production use."
+    ]),
+    ("Full-Stack Product Engineer - BeatHub", "2026", [
+        "Built and deployed a production marketplace with authentication, role-based dashboards, PostgreSQL-backed orders and transaction workflows.",
+        "Implemented M-Pesa/Paystack callbacks, transaction-status handling, withdrawals, integrations and production troubleshooting."
+    ]),
+    ("Bank Teller / Branch IT Support", "Access Bank, JKIA | Jan 2024 - Feb 2025", [
+        "Processed high-volume financial transactions while maintaining accurate, audit-ready records and strict confidentiality.",
+        "Supported teller terminals, printers and network/connectivity issues and coordinated technical resolution during downtime."
+    ]),
+    ("Assessment & Certification Officer / Digital Material Development Officer", "TVET CDACC | Nov 2020 - Jun 2022", [
+        "Developed and reviewed competency-based curricula, occupational standards and assessment tools and digitized learning materials.",
+        "Worked with technical stakeholders on quality review, documentation and standards-driven certification processes."
+    ]),
+    ("Frequency Spectrum & IT Office Support Attaché", "Communications Authority of Kenya | Apr 2019 - Jul 2019", [
+        "Supported spectrum monitoring/licensing and regional IT maintenance in a regulated telecommunications environment."
+    ])
+]
+
+def get_job_by_id(job_id, jobs):
+    return next((j for j in jobs if j.get("id")==job_id), None)
+
+def role_track(job):
+    t=(job.get("title","")+" "+job.get("description","")).lower()
+    if any(k in t for k in ["ai","automation","llm","agent","prompt","machine learning"]):
+        return "AI Automation & Agentic Workflows"
+    if any(k in t for k in ["data","sql","analytics","database","business intelligence"]):
+        return "Data, SQL & Applications"
+    if any(k in t for k in ["network","telecom","ict","infrastructure","support","systems administrator"]):
+        return "ICT Infrastructure & Applications"
+    return "Full-Stack, Applications & Systems Integration"
+
+def tailored_summary(job):
+    track=role_track(job)
+    matched=", ".join((job.get("matched") or [])[:7])
+    if track=="AI Automation & Agentic Workflows":
+        return ("AI automation and applications specialist with hands-on experience building AI-enabled workflows, "
+                "integrating APIs and PostgreSQL/Supabase-backed systems, testing edge cases and deploying practical digital products. "
+                "Brings regulated banking, telecommunications and assessment experience, with strong documentation and stakeholder communication.")
+    if track=="Data, SQL & Applications":
+        return ("Technology professional with practical SQL/PostgreSQL, data-backed application and workflow-integration experience across deployed products, "
+                "banking operations and public-sector systems. Experienced in data accuracy, reconciliation, troubleshooting, APIs and technical documentation.")
+    if track=="ICT Infrastructure & Applications":
+        return ("Infrastructure and applications professional with an Electrical & Telecommunications Engineering background and hands-on experience in networks, "
+                "IT support, application deployment, PostgreSQL-backed systems, troubleshooting, user support and regulated operations.")
+    return ("Full-stack and applications professional with hands-on experience building, integrating, deploying and troubleshooting modern web applications, APIs, "
+            "PostgreSQL-backed workflows, authentication and production systems, backed by engineering and regulated-operations experience.")
+
+def application_pack(job):
+    summary=tailored_summary(job)
+    matched=(job.get("matched") or [])[:8]
+    gap=[]
+    text=(job.get("description","")+" "+job.get("title","")).lower()
+    for phrase,label in [
+        ("master's","Master's degree"),("phd","PhD"),("active directory","Active Directory"),
+        ("azure","Azure"),("aws","AWS"),("kubernetes","Kubernetes"),("c-level","C-level leadership"),
+        ("10+ years","10+ years experience"),("8+ years","8+ years experience"),("7+ years","7+ years experience")
+    ]:
+        if phrase in text and not any(phrase in x for x in matched): gap.append(label)
+    cover=(f"Dear Hiring Team,\n\nI am applying for the {job.get('title','role')} position at {job.get('company','your organisation')}. "
+           f"My background combines hands-on technology delivery with experience in AI-enabled workflows, applications, databases, telecommunications and regulated operations. "
+           f"For this role, the strongest overlap includes {', '.join(matched[:6]) if matched else 'systems integration, technical problem-solving and reliable execution'}.\n\n"
+           "I have built and supported production digital systems, worked with PostgreSQL/SQL and APIs, tested workflows against real edge cases, and operated in environments where accuracy, confidentiality and documentation matter. "
+           "I would welcome the opportunity to discuss how this combination can support your team.\n\nKind regards,\nAnthony Kipkoech Bii")
+    answers={
+        "Why are you interested in this role?":f"The role aligns with my practical experience in {', '.join(matched[:5]) if matched else role_track(job)} and my preference for hands-on work that turns business needs into reliable systems.",
+        "What makes you a strong fit?":f"I combine engineering and systems thinking with deployed product experience, structured testing, technical documentation and regulated-operations discipline. My closest matching areas are {', '.join(matched[:6]) if matched else 'applications, integration and troubleshooting'}.",
+        "Availability":"Available for full-time or contract opportunities and flexible working hours where required.",
+        "Location":"Nairobi, Kenya; open to Kenya-based, hybrid and remote roles."
+    }
+    return {"summary":summary,"track":role_track(job),"matched":matched,"gaps":gap,"cover_letter":cover,"answers":answers}
+
+@app.get("/api/application/{job_id}")
+async def api_application(job_id:str):
+    jobs=await scan(False)
+    job=get_job_by_id(job_id,jobs)
+    if not job: raise HTTPException(404,"Job not found")
+    pack=application_pack(job)
+    email_match=re.search(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}",job.get("description",""),re.I)
+    return {"job":{k:job.get(k) for k in ["id","title","company","location","url","score","band","source"]},
+            "application_email":email_match.group(0) if email_match else None,
+            **pack}
+
+@app.get("/api/cv/{job_id}.pdf")
+async def tailored_cv_pdf(job_id:str):
+    jobs=await scan(False)
+    job=get_job_by_id(job_id,jobs)
+    if not job: raise HTTPException(404,"Job not found")
+    pack=application_pack(job)
+    buf=io.BytesIO()
+    styles=getSampleStyleSheet()
+    styles.add(ParagraphStyle(name="NameX",parent=styles["Title"],fontName="Helvetica-Bold",fontSize=18,leading=20,alignment=TA_CENTER,textColor=colors.HexColor("#172033"),spaceAfter=3))
+    styles.add(ParagraphStyle(name="HeadX",parent=styles["Normal"],fontName="Helvetica-Bold",fontSize=10.5,alignment=TA_CENTER,textColor=colors.HexColor("#315C9A"),spaceAfter=4))
+    styles.add(ParagraphStyle(name="ContactX",parent=styles["Normal"],fontSize=8.5,alignment=TA_CENTER,textColor=colors.HexColor("#66758A"),spaceAfter=8))
+    styles.add(ParagraphStyle(name="SecX",parent=styles["Heading2"],fontName="Helvetica-Bold",fontSize=10.5,textColor=colors.HexColor("#1F4E79"),spaceBefore=7,spaceAfter=4))
+    styles.add(ParagraphStyle(name="BodyX",parent=styles["BodyText"],fontSize=8.8,leading=11.2,spaceAfter=3))
+    styles.add(ParagraphStyle(name="RoleX",parent=styles["BodyText"],fontName="Helvetica-Bold",fontSize=9.2,leading=11,spaceBefore=3,spaceAfter=1))
+    doc=SimpleDocTemplate(buf,pagesize=A4,rightMargin=38,leftMargin=38,topMargin=32,bottomMargin=32)
+    story=[
+        Paragraph(PROFILE["name"],styles["NameX"]),
+        Paragraph(pack["track"].upper(),styles["HeadX"]),
+        Paragraph(f'{PROFILE["location"]} | {PROFILE["phone"]} | {PROFILE["email"]} | {PROFILE["linkedin"]} | {PROFILE["portfolio"]}',styles["ContactX"]),
+        Paragraph("PROFESSIONAL SUMMARY",styles["SecX"]),
+        Paragraph(pack["summary"],styles["BodyX"]),
+        Paragraph("CORE SKILLS",styles["SecX"])
+    ]
+    skills=(pack["matched"] or ["AI automation","Python","SQL","PostgreSQL","APIs","systems integration","technical documentation"])
+    story.append(Paragraph(" • ".join([s.title() for s in skills[:10]]),styles["BodyX"]))
+    story.append(Paragraph("SELECTED EXPERIENCE",styles["SecX"]))
+    for title,where,bullets in BASE_EXPERIENCE:
+        story.append(Paragraph(f"{title} | {where}",styles["RoleX"]))
+        story.append(ListFlowable([ListItem(Paragraph(b,styles["BodyX"]),leftIndent=10) for b in bullets],bulletType="bullet",leftIndent=16,bulletFontSize=5))
+    story.append(Paragraph("EDUCATION & CERTIFICATIONS",styles["SecX"]))
+    story.append(Paragraph(PROFILE["education"],styles["BodyX"]))
+    for cert in PROFILE["certs"]:
+        story.append(Paragraph("• "+cert,styles["BodyX"]))
+    story.append(Paragraph("TARGET ROLE",styles["SecX"]))
+    story.append(Paragraph(f'{job.get("title","")} — {job.get("company","")}. Resume tailored automatically to the posting while preserving verified experience only.',styles["BodyX"]))
+    doc.build(story)
+    buf.seek(0)
+    safe=re.sub(r"[^A-Za-z0-9_-]+","_",f'Anthony_Bii_{job.get("title","Role")}')[:90]+".pdf"
+    return StreamingResponse(buf,media_type="application/pdf",headers={"Content-Disposition":f'attachment; filename="{safe}"'})
+
 async def background_scanner():
     while True:
         try:
@@ -132,8 +281,8 @@ let all=[]; const state=JSON.parse(localStorage.getItem("jobRadarState")||"{}");
 function setState(id,s){state[id]=s;localStorage.setItem("jobRadarState",JSON.stringify(state));render()}
 function fitClass(b){return b.startsWith("Excellent")?"excellent":b.startsWith("Strong")?"strong":b.startsWith("Possible")?"possible":"stretch"}
 function esc(s){return (s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","'":"&#039;"}[m]))}
-function pack(j){alert("APPLICATION PACK\\n\\nResume track: "+(j.title.toLowerCase().match(/ai|automation|agent|llm/)?"AI Automation / Agent":"Systems / Software / Data")+"\\n\\nLead with: "+(j.matched||[]).slice(0,6).join(", ")+"\\n\\nFit: "+j.band+" ("+j.score+"%).\\n\\nOpen Apply, then tailor your summary and top 4-6 bullets to this posting.");}
-function render(){const q=document.getElementById("q").value.toLowerCase(),min=+document.getElementById("min").value,sf=document.getElementById("status").value;const jobs=all.filter(j=>j.score>=min&&(!q||(j.title+" "+j.company+" "+j.description).toLowerCase().includes(q))&&(!sf||(state[j.id]||"new")==sf));document.getElementById("jobs").innerHTML=jobs.length?jobs.map(j=>'<section class="card"><div class="row"><div><div class="title">'+esc(j.title)+'</div><div class="meta">'+esc(j.company)+' · '+esc(j.location||"Remote")+' · '+esc(j.source)+'</div></div><div class="score '+fitClass(j.band)+'">'+j.score+'%</div></div><div class="chips">'+(j.matched||[]).slice(0,7).map(x=>'<span class="chip">'+esc(x)+'</span>').join("")+'</div><div class="actions"><a class="btn primary" target="_blank" rel="noopener" href="'+j.url+'">Apply ↗</a><button class="btn pack" data-id="'+j.id+'">Application pack</button><button class="btn" onclick="setState(\\''+j.id+'\\',\\'saved\\')">Save</button><button class="btn" onclick="setState(\\''+j.id+'\\',\\'applied\\')">Applied ✓</button><button class="btn" onclick="setState(\\''+j.id+'\\',\\'ignored\\')">Ignore</button><span class="small">'+(state[j.id]||"new")+'</span></div></section>').join(""):'<div class="empty">No jobs match these filters.</div>';document.querySelectorAll(".pack").forEach(b=>b.onclick=()=>pack(all.find(x=>x.id===b.dataset.id)));document.getElementById("applied").textContent=Object.values(state).filter(x=>x==="applied").length;}
+async function pack(j){const r=await fetch("/api/application/"+encodeURIComponent(j.id));const p=await r.json();const gaps=(p.gaps||[]).length?("\n\nCHECK BEFORE SUBMITTING: "+p.gaps.join(", ")):"";const answers=Object.entries(p.answers||{}).map(([q,a])=>"\n• "+q+"\n  "+a).join("");alert("APPLICATION PACK\n\nResume track: "+p.track+"\n\nTAILORED SUMMARY\n"+p.summary+"\n\nCOVER NOTE\n"+p.cover_letter+"\n\nLIKELY FORM ANSWERS"+answers+gaps);}
+function render(){const q=document.getElementById("q").value.toLowerCase(),min=+document.getElementById("min").value,sf=document.getElementById("status").value;const jobs=all.filter(j=>j.score>=min&&(!q||(j.title+" "+j.company+" "+j.description).toLowerCase().includes(q))&&(!sf||(state[j.id]||"new")==sf));document.getElementById("jobs").innerHTML=jobs.length?jobs.map(j=>'<section class="card"><div class="row"><div><div class="title">'+esc(j.title)+'</div><div class="meta">'+esc(j.company)+' · '+esc(j.location||"Remote")+' · '+esc(j.source)+'</div></div><div class="score '+fitClass(j.band)+'">'+j.score+'%</div></div><div class="chips">'+(j.matched||[]).slice(0,7).map(x=>'<span class="chip">'+esc(x)+'</span>').join("")+'</div><div class="actions"><a class="btn primary" target="_blank" rel="noopener" href="'+j.url+'" onclick="setState('"+j.id+"','saved')">Apply ↗</a><a class="btn" href="/api/cv/"+encodeURIComponent(j.id)+".pdf">Tailored CV ↓</a><button class="btn pack" data-id="'+j.id+'">Application pack</button><button class="btn" onclick="setState(\\''+j.id+'\\',\\'saved\\')">Save</button><button class="btn" onclick="setState(\\''+j.id+'\\',\\'applied\\')">Applied ✓</button><button class="btn" onclick="setState(\\''+j.id+'\\',\\'ignored\\')">Ignore</button><span class="small">'+(state[j.id]||"new")+'</span></div></section>').join(""):'<div class="empty">No jobs match these filters.</div>';document.querySelectorAll(".pack").forEach(b=>b.onclick=()=>pack(all.find(x=>x.id===b.dataset.id)));document.getElementById("applied").textContent=Object.values(state).filter(x=>x==="applied").length;}
 async function loadJobs(force=false){document.getElementById("updated").textContent="Scanning…";try{const r=await fetch("/api/jobs?min_score=35&refresh="+(force?1:0));const d=await r.json();all=d.jobs||[];document.getElementById("total").textContent=all.length;document.getElementById("excellent").textContent=all.filter(x=>x.score>=82).length;document.getElementById("strong").textContent=all.filter(x=>x.score>=68&&x.score<82).length;document.getElementById("updated").textContent="Updated "+new Date(d.updated_at).toLocaleString();render()}catch(e){document.getElementById("jobs").innerHTML='<div class="empty">Scan failed. Retry in a moment.</div>'}}
 loadJobs();setInterval(()=>loadJobs(false),900000);
 </script></body></html>""")

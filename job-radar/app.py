@@ -74,6 +74,18 @@ async def scan(force=False):
     CACHE.update(ts=now,jobs=jobs)
     return jobs
 
+async def background_scanner():
+    while True:
+        try:
+            await scan(True)
+        except Exception:
+            pass
+        await asyncio.sleep(1800)
+
+@app.on_event("startup")
+async def start_background_scanner():
+    asyncio.create_task(background_scanner())
+
 @app.get("/health")
 async def health():
     return {"ok":True,"cached_jobs":len(CACHE["jobs"])}

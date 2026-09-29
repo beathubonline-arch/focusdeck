@@ -277,12 +277,91 @@ body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;color:var(--text);bac
 <a class="source" target="_blank" href="https://remotive.com/remote-jobs">Remotive ↗</a>
 <h3 style="margin-top:18px">Best-fit tracks</h3><div class="small">AI automation · AI/LLM evaluation · Full-stack/backend · Applications & systems integration · IT support · Telecom · SQL/data · Technical training</div></aside></div></div>
 <script>
-let all=[]; const state=JSON.parse(localStorage.getItem("jobRadarState")||"{}");
-function setState(id,s){state[id]=s;localStorage.setItem("jobRadarState",JSON.stringify(state));render()}
-function fitClass(b){return b.startsWith("Excellent")?"excellent":b.startsWith("Strong")?"strong":b.startsWith("Possible")?"possible":"stretch"}
-function esc(s){return (s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","'":"&#039;"}[m]))}
-async function pack(j){const r=await fetch("/api/application/"+encodeURIComponent(j.id));const p=await r.json();const gaps=(p.gaps||[]).length?("\n\nCHECK BEFORE SUBMITTING: "+p.gaps.join(", ")):"";const answers=Object.entries(p.answers||{}).map(([q,a])=>"\n• "+q+"\n  "+a).join("");alert("APPLICATION PACK\n\nResume track: "+p.track+"\n\nTAILORED SUMMARY\n"+p.summary+"\n\nCOVER NOTE\n"+p.cover_letter+"\n\nLIKELY FORM ANSWERS"+answers+gaps);}
-function render(){const q=document.getElementById("q").value.toLowerCase(),min=+document.getElementById("min").value,sf=document.getElementById("status").value;const jobs=all.filter(j=>j.score>=min&&(!q||(j.title+" "+j.company+" "+j.description).toLowerCase().includes(q))&&(!sf||(state[j.id]||"new")==sf));document.getElementById("jobs").innerHTML=jobs.length?jobs.map(j=>'<section class="card"><div class="row"><div><div class="title">'+esc(j.title)+'</div><div class="meta">'+esc(j.company)+' · '+esc(j.location||"Remote")+' · '+esc(j.source)+'</div></div><div class="score '+fitClass(j.band)+'">'+j.score+'%</div></div><div class="chips">'+(j.matched||[]).slice(0,7).map(x=>'<span class="chip">'+esc(x)+'</span>').join("")+'</div><div class="actions"><a class="btn primary" target="_blank" rel="noopener" href="'+j.url+'" onclick="setState('"+j.id+"','saved')">Apply ↗</a><a class="btn" href="/api/cv/"+encodeURIComponent(j.id)+".pdf">Tailored CV ↓</a><button class="btn pack" data-id="'+j.id+'">Application pack</button><button class="btn" onclick="setState(\\''+j.id+'\\',\\'saved\\')">Save</button><button class="btn" onclick="setState(\\''+j.id+'\\',\\'applied\\')">Applied ✓</button><button class="btn" onclick="setState(\\''+j.id+'\\',\\'ignored\\')">Ignore</button><span class="small">'+(state[j.id]||"new")+'</span></div></section>').join(""):'<div class="empty">No jobs match these filters.</div>';document.querySelectorAll(".pack").forEach(b=>b.onclick=()=>pack(all.find(x=>x.id===b.dataset.id)));document.getElementById("applied").textContent=Object.values(state).filter(x=>x==="applied").length;}
-async function loadJobs(force=false){document.getElementById("updated").textContent="Scanning…";try{const r=await fetch("/api/jobs?min_score=35&refresh="+(force?1:0));const d=await r.json();all=d.jobs||[];document.getElementById("total").textContent=all.length;document.getElementById("excellent").textContent=all.filter(x=>x.score>=82).length;document.getElementById("strong").textContent=all.filter(x=>x.score>=68&&x.score<82).length;document.getElementById("updated").textContent="Updated "+new Date(d.updated_at).toLocaleString();render()}catch(e){document.getElementById("jobs").innerHTML='<div class="empty">Scan failed. Retry in a moment.</div>'}}
-loadJobs();setInterval(()=>loadJobs(false),900000);
+let all=[];
+const state=JSON.parse(localStorage.getItem("jobRadarState")||"{}");
+
+function setState(id,s){
+  state[id]=s;
+  localStorage.setItem("jobRadarState",JSON.stringify(state));
+  render();
+}
+function fitClass(b){
+  return b.startsWith("Excellent")?"excellent":b.startsWith("Strong")?"strong":b.startsWith("Possible")?"possible":"stretch";
+}
+function esc(s){
+  const d=document.createElement("div");
+  d.textContent=s||"";
+  return d.innerHTML;
+}
+async function showPack(id){
+  try{
+    const r=await fetch("/api/application/"+encodeURIComponent(id));
+    if(!r.ok) throw new Error("Could not build application pack");
+    const p=await r.json();
+    const gaps=(p.gaps||[]).length?("\n\nCHECK BEFORE SUBMITTING: "+p.gaps.join(", ")):"";
+    const answers=Object.entries(p.answers||{}).map(([q,a])=>"\n• "+q+"\n  "+a).join("");
+    alert("APPLICATION PACK\n\nResume track: "+p.track+"\n\nTAILORED SUMMARY\n"+p.summary+"\n\nCOVER NOTE\n"+p.cover_letter+"\n\nLIKELY FORM ANSWERS"+answers+gaps);
+  }catch(e){ alert(e.message); }
+}
+function render(){
+  const q=(document.getElementById("q").value||"").toLowerCase();
+  const min=Number(document.getElementById("min").value||68);
+  const sf=document.getElementById("status").value;
+  const jobs=all.filter(j =>
+    j.score>=min &&
+    (!q || ((j.title||"")+" "+(j.company||"")+" "+(j.description||"")).toLowerCase().includes(q)) &&
+    (!sf || (state[j.id]||"new")===sf)
+  );
+  const root=document.getElementById("jobs");
+  if(!jobs.length){
+    root.innerHTML='<div class="empty">No jobs match these filters. Try 55%+ fit or press Scan now.</div>';
+  } else {
+    root.innerHTML=jobs.map(j => {
+      const chips=(j.matched||[]).slice(0,7).map(x=>'<span class="chip">'+esc(x)+'</span>').join("");
+      const id=encodeURIComponent(j.id);
+      return '<section class="card">'+
+        '<div class="row"><div><div class="title">'+esc(j.title)+'</div>'+
+        '<div class="meta">'+esc(j.company)+' · '+esc(j.location||"Remote")+' · '+esc(j.source)+'</div></div>'+
+        '<div class="score '+fitClass(j.band)+'">'+j.score+'%</div></div>'+
+        '<div class="chips">'+chips+'</div>'+
+        '<div class="actions">'+
+          '<a class="btn primary" target="_blank" rel="noopener" href="'+esc(j.url)+'" data-state-id="'+esc(j.id)+'">Apply ↗</a>'+
+          '<a class="btn" href="/api/cv/'+id+'.pdf">Tailored CV ↓</a>'+
+          '<button class="btn pack" data-job-id="'+esc(j.id)+'">Application pack</button>'+
+          '<button class="btn statebtn" data-job-id="'+esc(j.id)+'" data-state="saved">Save</button>'+
+          '<button class="btn statebtn" data-job-id="'+esc(j.id)+'" data-state="applied">Applied ✓</button>'+
+          '<button class="btn statebtn" data-job-id="'+esc(j.id)+'" data-state="ignored">Ignore</button>'+
+          '<span class="small">'+esc(state[j.id]||"new")+'</span>'+
+        '</div></section>';
+    }).join("");
+  }
+  root.querySelectorAll(".pack").forEach(b=>b.addEventListener("click",()=>showPack(b.dataset.jobId)));
+  root.querySelectorAll(".statebtn").forEach(b=>b.addEventListener("click",()=>setState(b.dataset.jobId,b.dataset.state)));
+  root.querySelectorAll("[data-state-id]").forEach(a=>a.addEventListener("click",()=>setState(a.dataset.stateId,"saved")));
+  document.getElementById("applied").textContent=Object.values(state).filter(x=>x==="applied").length;
+}
+async function loadJobs(force=false){
+  const u=document.getElementById("updated");
+  u.textContent="Scanning live sources…";
+  try{
+    const r=await fetch("/api/jobs?min_score=35&refresh="+(force?1:0),{cache:"no-store"});
+    if(!r.ok) throw new Error("Job scan returned "+r.status);
+    const d=await r.json();
+    all=d.jobs||[];
+    document.getElementById("total").textContent=all.length;
+    document.getElementById("excellent").textContent=all.filter(x=>x.score>=82).length;
+    document.getElementById("strong").textContent=all.filter(x=>x.score>=68&&x.score<82).length;
+    u.textContent="Updated "+new Date(d.updated_at).toLocaleString();
+    render();
+  }catch(e){
+    u.textContent="Scan error";
+    document.getElementById("jobs").innerHTML='<div class="empty"><b>Job feed error.</b><br>'+esc(e.message)+'<br><br>Press Scan now to retry.</div>';
+  }
+}
+document.getElementById("q").addEventListener("input",render);
+document.getElementById("min").addEventListener("change",render);
+document.getElementById("status").addEventListener("change",render);
+document.querySelector(".top .primary").addEventListener("click",()=>loadJobs(true));
+loadJobs(false);
+setInterval(()=>loadJobs(false),900000);
 </script></body></html>""")

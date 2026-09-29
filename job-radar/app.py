@@ -1,4 +1,4 @@
-import asyncio, re, time, io
+import asyncio, re, time, io, urllib.parse
 from datetime import datetime, timezone
 import httpx
 from fastapi import FastAPI, HTTPException
@@ -263,184 +263,65 @@ async def api_jobs(refresh:int=0, min_score:int=35):
     return {"updated_at":datetime.now(timezone.utc).isoformat(),"count":len(jobs),"jobs":jobs[:100]}
 
 @app.get("/",response_class=HTMLResponse)
-async def home():
-    return HTMLResponse("""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Anthony Job Radar</title>
+async def home(refresh:int=0, min_score:int=55):
+    jobs=await scan(bool(refresh))
+    visible=[j for j in jobs if j.get("score",0)>=min_score][:60]
+    excellent=sum(1 for j in jobs if j.get("score",0)>=82)
+    strong=sum(1 for j in jobs if 68<=j.get("score",0)<82)
+    total=len(jobs)
+    def h(s):
+        import html as _html
+        return _html.escape(str(s or ""))
+    cards=[]
+    for j in visible:
+        cls="excellent" if j["score"]>=82 else "strong" if j["score"]>=68 else "possible" if j["score"]>=55 else "stretch"
+        chips="".join(f'<span class="chip">{h(x)}</span>' for x in (j.get("matched") or [])[:7])
+        jid=urllib.parse.quote(j["id"],safe="")
+        cards.append(f'''<section class="card">
+          <div class="row"><div><div class="title">{h(j["title"])}</div>
+          <div class="meta">{h(j["company"])} · {h(j.get("location") or "Remote")} · {h(j["source"])}</div></div>
+          <div class="score {cls}">{j["score"]}%</div></div>
+          <div class="chips">{chips}</div>
+          <div class="actions">
+            <a class="btn primary" target="_blank" rel="noopener" href="{h(j["url"])}">Apply ↗</a>
+            <a class="btn" href="/api/cv/{jid}.pdf">Tailored CV ↓</a>
+            <a class="btn" target="_blank" href="/application/{jid}">Application pack</a>
+          </div>
+        </section>''')
+    cards_html="".join(cards) if cards else '<div class="empty">No jobs match this threshold right now. Try 55%+ fit.</div>'
+    return HTMLResponse(f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Anthony Job Radar</title>
 <style>
-:root{
-  --forest:#123524;--forest-2:#1f5a3c;--emerald:#2f8f57;--lime:#b7d94b;--sun:#f6d84a;
-  --cream:#fffdf3;--paper:#ffffff;--ink:#173126;--muted:#6e7d73;--line:#e6eadc;
-  --soft-green:#eef8ee;--soft-yellow:#fff8cf;--shadow:0 14px 36px rgba(32,73,48,.10);
-  --shadow-soft:0 8px 22px rgba(32,73,48,.07)
-}
-*{box-sizing:border-box}
-body{
-  margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);
-  background:
-    radial-gradient(circle at 8% 0%,rgba(183,217,75,.32),transparent 31%),
-    radial-gradient(circle at 92% 4%,rgba(47,143,87,.18),transparent 28%),
-    linear-gradient(180deg,#fffef8 0%,#f5f8e9 48%,#edf6ee 100%);
-  min-height:100vh
-}
-.wrap{max-width:1340px;margin:auto;padding:28px 22px 46px}
-.top{
-  position:relative;overflow:hidden;display:flex;justify-content:space-between;gap:24px;align-items:center;
-  padding:26px 28px;border-radius:26px;
-  background:linear-gradient(125deg,var(--forest) 0%,var(--forest-2) 62%,#5e7f2d 100%);
-  box-shadow:0 18px 42px rgba(25,70,43,.18);color:#fff
-}
-.top:after{content:"";position:absolute;right:-70px;top:-95px;width:260px;height:260px;border-radius:50%;background:rgba(246,216,74,.17)}
-.brand{position:relative;z-index:1}
-.eyebrow{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.12);font-size:12px;font-weight:750;color:#f7ef9b;margin-bottom:10px}
-.brand h1{margin:0;font-size:34px;letter-spacing:-.035em;color:#fff}
-.brand p{margin:7px 0 0;color:#dcebdc;font-size:15px}
-.btn{
-  border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:10px 14px;cursor:pointer;
-  text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-weight:720;box-shadow:var(--shadow-soft);transition:.2s ease
-}
-.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
-.btn.primary{background:linear-gradient(135deg,var(--sun),#f4c93d);color:#294116;border-color:#eed03f}
-.top .btn.primary{position:relative;z-index:1;min-width:128px;font-size:14px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}
-.stat{
-  position:relative;overflow:hidden;background:rgba(255,255,255,.93);border:1px solid rgba(230,234,220,.95);
-  padding:18px 18px 17px;border-radius:19px;box-shadow:var(--shadow-soft)
-}
-.stat:before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:linear-gradient(180deg,var(--emerald),var(--sun))}
-.stat b{font-size:29px;display:block;letter-spacing:-.03em}.stat span{color:var(--muted);font-size:13px;font-weight:650}
-.controls{
-  display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:rgba(255,255,255,.92);padding:13px;
-  border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-soft)
-}
-.controls input,.controls select{background:#fffef8;color:var(--ink);border:1px solid #dfe7d6;padding:10px 12px;border-radius:11px;min-height:42px;outline:none}
-.controls input{min-width:250px;flex:1}
-.controls input:focus,.controls select:focus{border-color:var(--emerald);box-shadow:0 0 0 4px rgba(47,143,87,.10)}
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;margin-top:18px}
-.jobs{display:grid;gap:13px}
-.card{
-  position:relative;background:rgba(255,255,255,.95);border:1px solid #e4eadc;border-radius:20px;padding:19px;
-  box-shadow:var(--shadow-soft);transition:.2s ease;overflow:hidden
-}
-.card:after{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--emerald),var(--lime),var(--sun))}
-.card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
-.row{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.title{font-weight:850;font-size:18px;line-height:1.28;letter-spacing:-.01em}
-.meta{color:var(--muted);font-size:13px;margin:6px 0 11px}.chips{display:flex;gap:7px;flex-wrap:wrap}
-.chip{font-size:12px;padding:5px 9px;border-radius:999px;background:var(--soft-green);color:#28633f;border:1px solid #d4ead4;font-weight:650}
-.score{font-weight:850;font-size:14px;min-width:80px;text-align:center;padding:8px 10px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
-.excellent{color:#185d31;background:#e9f7e8;border-color:#bde1bd}.strong{color:#536614;background:#f5f9db;border-color:#dde9a8}
-.possible{color:#7a5d08;background:var(--soft-yellow);border-color:#f0df8a}.stretch{color:#7e6131;background:#fff3df;border-color:#eed5ae}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
-.side{
-  background:linear-gradient(180deg,#173a29,#234d35);color:#fff;border-radius:22px;padding:18px;height:max-content;
-  position:sticky;top:15px;box-shadow:0 15px 34px rgba(29,68,44,.17)
-}
-.side h3{margin:0 0 9px;font-size:16px;color:#fff}.side .small{color:#cadccb}
-.source{display:flex;justify-content:space-between;color:#eef7df;text-decoration:none;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.11);font-weight:650}
-.source:hover{color:#ffe96c}.small{font-size:12px;color:var(--muted);line-height:1.5}
-.empty{padding:48px 20px;text-align:center;color:var(--muted);background:rgba(255,255,255,.78);border:1px dashed #d9e3cf;border-radius:20px}
-#updated{margin-left:auto;background:#f8f8ea;padding:7px 10px;border-radius:999px}
-@media(max-width:900px){.layout{grid-template-columns:1fr}.side{position:static}.stats{grid-template-columns:1fr 1fr}}
-@media(max-width:590px){.wrap{padding:16px 12px 28px}.top{padding:22px 18px;align-items:flex-start;flex-direction:column}.brand h1{font-size:29px}.stats{grid-template-columns:1fr 1fr}.controls input{min-width:100%}.btn{padding:9px 11px}.stat{padding:15px}}
+:root{{--forest:#123524;--forest-2:#1f5a3c;--emerald:#2f8f57;--lime:#b7d94b;--sun:#f6d84a;--cream:#fffdf3;--paper:#ffffff;--ink:#173126;--muted:#6e7d73;--line:#e6eadc;--soft-green:#eef8ee;--soft-yellow:#fff8cf;--shadow:0 14px 36px rgba(32,73,48,.10);--shadow-soft:0 8px 22px rgba(32,73,48,.07)}}
+*{{box-sizing:border-box}}body{{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:radial-gradient(circle at 8% 0%,rgba(183,217,75,.32),transparent 31%),radial-gradient(circle at 92% 4%,rgba(47,143,87,.18),transparent 28%),linear-gradient(180deg,#fffef8 0%,#f5f8e9 48%,#edf6ee 100%);min-height:100vh}}
+.wrap{{max-width:1340px;margin:auto;padding:28px 22px 46px}}.top{{position:relative;overflow:hidden;display:flex;justify-content:space-between;gap:24px;align-items:center;padding:26px 28px;border-radius:26px;background:linear-gradient(125deg,var(--forest) 0%,var(--forest-2) 62%,#5e7f2d 100%);box-shadow:0 18px 42px rgba(25,70,43,.18);color:#fff}}.top:after{{content:"";position:absolute;right:-70px;top:-95px;width:260px;height:260px;border-radius:50%;background:rgba(246,216,74,.17)}}.brand{{position:relative;z-index:1}}.eyebrow{{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.12);font-size:12px;font-weight:750;color:#f7ef9b;margin-bottom:10px}}.brand h1{{margin:0;font-size:34px;letter-spacing:-.035em;color:#fff}}.brand p{{margin:7px 0 0;color:#dcebdc;font-size:15px}}
+.btn{{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:10px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;font-weight:720;box-shadow:var(--shadow-soft);transition:.2s ease}}.btn:hover{{transform:translateY(-1px);box-shadow:var(--shadow)}}.btn.primary{{background:linear-gradient(135deg,var(--sun),#f4c93d);color:#294116;border-color:#eed03f}}.top .btn.primary{{position:relative;z-index:1;min-width:128px}}
+.stats{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}}.stat{{position:relative;overflow:hidden;background:rgba(255,255,255,.93);border:1px solid rgba(230,234,220,.95);padding:18px;border-radius:19px;box-shadow:var(--shadow-soft)}}.stat:before{{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:linear-gradient(180deg,var(--emerald),var(--sun))}}.stat b{{font-size:29px;display:block}}.stat span{{color:var(--muted);font-size:13px;font-weight:650}}
+.controls{{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:rgba(255,255,255,.92);padding:13px;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-soft)}}.controls a{{text-decoration:none}}.pill{{padding:9px 12px;border-radius:999px;border:1px solid #dfe7d6;color:#315c3e;background:#fffef8;font-size:13px;font-weight:700}}.pill.active{{background:#204d35;color:#fff;border-color:#204d35}}.updated{{margin-left:auto;background:#f8f8ea;padding:7px 10px;border-radius:999px;color:var(--muted);font-size:12px}}
+.layout{{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;margin-top:18px}}.jobs{{display:grid;gap:13px}}.card{{position:relative;background:rgba(255,255,255,.95);border:1px solid #e4eadc;border-radius:20px;padding:19px;box-shadow:var(--shadow-soft);transition:.2s ease;overflow:hidden}}.card:after{{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--emerald),var(--lime),var(--sun))}}.card:hover{{transform:translateY(-2px);box-shadow:var(--shadow)}}.row{{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}}.title{{font-weight:850;font-size:18px;line-height:1.28}}.meta{{color:var(--muted);font-size:13px;margin:6px 0 11px}}.chips{{display:flex;gap:7px;flex-wrap:wrap}}.chip{{font-size:12px;padding:5px 9px;border-radius:999px;background:var(--soft-green);color:#28633f;border:1px solid #d4ead4;font-weight:650}}.score{{font-weight:850;font-size:14px;min-width:80px;text-align:center;padding:8px 10px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}}.excellent{{color:#185d31;background:#e9f7e8;border-color:#bde1bd}}.strong{{color:#536614;background:#f5f9db;border-color:#dde9a8}}.possible{{color:#7a5d08;background:var(--soft-yellow);border-color:#f0df8a}}.stretch{{color:#7e6131;background:#fff3df;border-color:#eed5ae}}.actions{{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}}
+.side{{background:linear-gradient(180deg,#173a29,#234d35);color:#fff;border-radius:22px;padding:18px;height:max-content;position:sticky;top:15px;box-shadow:0 15px 34px rgba(29,68,44,.17)}}.side h3{{margin:0 0 9px;font-size:16px}}.side .small{{color:#cadccb}}.source{{display:flex;color:#eef7df;text-decoration:none;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.11);font-weight:650}}.source:hover{{color:#ffe96c}}.small{{font-size:12px;color:var(--muted);line-height:1.5}}.empty{{padding:48px 20px;text-align:center;color:var(--muted);background:rgba(255,255,255,.78);border:1px dashed #d9e3cf;border-radius:20px}}
+@media(max-width:900px){{.layout{{grid-template-columns:1fr}}.side{{position:static}}.stats{{grid-template-columns:1fr 1fr}}}}@media(max-width:590px){{.wrap{{padding:16px 12px 28px}}.top{{padding:22px 18px;align-items:flex-start;flex-direction:column}}.brand h1{{font-size:29px}}.stats{{grid-template-columns:1fr 1fr}}.btn{{padding:9px 11px}}.stat{{padding:15px}}}}
 </style></head><body><div class="wrap">
-<div class="top"><div class="brand"><div class="eyebrow">● LIVE CAREER RADAR</div><h1>Anthony Job Radar</h1><p>High-fit roles first. Tailored CV ready. You review and apply.</p></div><button class="btn primary">Scan now</button></div>
-<div class="stats"><div class="stat"><b id="excellent">0</b><span>Excellent fit</span></div><div class="stat"><b id="strong">0</b><span>Strong fit</span></div><div class="stat"><b id="applied">0</b><span>Marked applied</span></div><div class="stat"><b id="total">0</b><span>Live matches</span></div></div>
-<div class="controls"><input id="q" placeholder="Search title, company, skill…" oninput="render()"><select id="min" onchange="render()"><option value="55">55%+ fit</option><option value="68" selected>68%+ strong</option><option value="82">82%+ excellent</option></select><select id="status" onchange="render()"><option value="">All statuses</option><option value="new">New</option><option value="saved">Saved</option><option value="applied">Applied</option><option value="ignored">Ignored</option></select><span class="small" id="updated"></span></div>
-<div class="layout"><main class="jobs" id="jobs"><div class="empty">Scanning live job feeds…</div></main>
-<aside class="side"><h3>Source launcher</h3><p class="small">Live API feeds are scanned automatically. These additional channels open directly for listings that block automated ingestion.</p>
-<a class="source" target="_blank" href="https://www.linkedin.com/jobs/search/?keywords=AI%20Automation&location=Kenya">LinkedIn ↗</a>
-<a class="source" target="_blank" href="https://www.brightermonday.co.ke/jobs">BrighterMonday ↗</a>
-<a class="source" target="_blank" href="https://www.fuzu.com/kenya/job">Fuzu ↗</a>
-<a class="source" target="_blank" href="https://www.myjobmag.co.ke/">MyJobMag Kenya ↗</a>
-<a class="source" target="_blank" href="https://www.careerpointkenya.co.ke/jobs/">Career Point Kenya ↗</a>
-<a class="source" target="_blank" href="https://wellfound.com/jobs">Wellfound ↗</a>
-<a class="source" target="_blank" href="https://remoteok.com/">Remote OK ↗</a>
-<a class="source" target="_blank" href="https://remotive.com/remote-jobs">Remotive ↗</a>
-<h3 style="margin-top:18px">Best-fit tracks</h3><div class="small">AI automation · AI/LLM evaluation · Full-stack/backend · Applications & systems integration · IT support · Telecom · SQL/data · Technical training</div></aside></div></div>
-<script>
-let all=[];
-const state=JSON.parse(localStorage.getItem("jobRadarState")||"{}");
+<div class="top"><div class="brand"><div class="eyebrow">● LIVE CAREER RADAR</div><h1>Anthony Job Radar</h1><p>High-fit roles first. Tailored CV ready. You review and apply.</p></div><a class="btn primary" href="/?refresh=1&min_score={min_score}">Scan now</a></div>
+<div class="stats"><div class="stat"><b>{excellent}</b><span>Excellent fit</span></div><div class="stat"><b>{strong}</b><span>Strong fit</span></div><div class="stat"><b>—</b><span>Application tracking</span></div><div class="stat"><b>{total}</b><span>Live jobs scanned</span></div></div>
+<div class="controls"><a class="pill {'active' if min_score==55 else ''}" href="/?min_score=55">55%+ fit</a><a class="pill {'active' if min_score==68 else ''}" href="/?min_score=68">68%+ strong</a><a class="pill {'active' if min_score==82 else ''}" href="/?min_score=82">82%+ excellent</a><span class="updated">Showing {len(visible)} jobs · server-rendered</span></div>
+<div class="layout"><main class="jobs">{cards_html}</main><aside class="side"><h3>Source launcher</h3><p class="small">Live API feeds are scanned automatically. Use these extra channels for listings that block automated ingestion.</p>
+<a class="source" target="_blank" href="https://www.linkedin.com/jobs/search/?keywords=AI%20Automation&location=Kenya">LinkedIn ↗</a><a class="source" target="_blank" href="https://www.brightermonday.co.ke/jobs">BrighterMonday ↗</a><a class="source" target="_blank" href="https://www.fuzu.com/kenya/job">Fuzu ↗</a><a class="source" target="_blank" href="https://www.myjobmag.co.ke/">MyJobMag Kenya ↗</a><a class="source" target="_blank" href="https://www.careerpointkenya.co.ke/jobs/">Career Point Kenya ↗</a><a class="source" target="_blank" href="https://wellfound.com/jobs">Wellfound ↗</a><a class="source" target="_blank" href="https://remoteok.com/">Remote OK ↗</a><a class="source" target="_blank" href="https://remotive.com/remote-jobs">Remotive ↗</a>
+<h3 style="margin-top:18px">Best-fit tracks</h3><div class="small">AI automation · AI/LLM evaluation · Full-stack/backend · Applications & systems integration · IT support · Telecom · SQL/data · Technical training</div></aside></div>
+</div></body></html>""")
 
-function setState(id,s){
-  state[id]=s;
-  localStorage.setItem("jobRadarState",JSON.stringify(state));
-  render();
-}
-function fitClass(b){
-  return b.startsWith("Excellent")?"excellent":b.startsWith("Strong")?"strong":b.startsWith("Possible")?"possible":"stretch";
-}
-function esc(s){
-  const d=document.createElement("div");
-  d.textContent=s||"";
-  return d.innerHTML;
-}
-async function showPack(id){
-  try{
-    const r=await fetch("/api/application/"+encodeURIComponent(id));
-    if(!r.ok) throw new Error("Could not build application pack");
-    const p=await r.json();
-    const gaps=(p.gaps||[]).length?("\n\nCHECK BEFORE SUBMITTING: "+p.gaps.join(", ")):"";
-    const answers=Object.entries(p.answers||{}).map(([q,a])=>"\n• "+q+"\n  "+a).join("");
-    alert("APPLICATION PACK\n\nResume track: "+p.track+"\n\nTAILORED SUMMARY\n"+p.summary+"\n\nCOVER NOTE\n"+p.cover_letter+"\n\nLIKELY FORM ANSWERS"+answers+gaps);
-  }catch(e){ alert(e.message); }
-}
-function render(){
-  const q=(document.getElementById("q").value||"").toLowerCase();
-  const min=Number(document.getElementById("min").value||68);
-  const sf=document.getElementById("status").value;
-  const jobs=all.filter(j =>
-    j.score>=min &&
-    (!q || ((j.title||"")+" "+(j.company||"")+" "+(j.description||"")).toLowerCase().includes(q)) &&
-    (!sf || (state[j.id]||"new")===sf)
-  );
-  const root=document.getElementById("jobs");
-  if(!jobs.length){
-    root.innerHTML='<div class="empty">No jobs match these filters. Try 55%+ fit or press Scan now.</div>';
-  } else {
-    root.innerHTML=jobs.map(j => {
-      const chips=(j.matched||[]).slice(0,7).map(x=>'<span class="chip">'+esc(x)+'</span>').join("");
-      const id=encodeURIComponent(j.id);
-      return '<section class="card">'+
-        '<div class="row"><div><div class="title">'+esc(j.title)+'</div>'+
-        '<div class="meta">'+esc(j.company)+' · '+esc(j.location||"Remote")+' · '+esc(j.source)+'</div></div>'+
-        '<div class="score '+fitClass(j.band)+'">'+j.score+'%</div></div>'+
-        '<div class="chips">'+chips+'</div>'+
-        '<div class="actions">'+
-          '<a class="btn primary" target="_blank" rel="noopener" href="'+esc(j.url)+'" data-state-id="'+esc(j.id)+'">Apply ↗</a>'+
-          '<a class="btn" href="/api/cv/'+id+'.pdf">Tailored CV ↓</a>'+
-          '<button class="btn pack" data-job-id="'+esc(j.id)+'">Application pack</button>'+
-          '<button class="btn statebtn" data-job-id="'+esc(j.id)+'" data-state="saved">Save</button>'+
-          '<button class="btn statebtn" data-job-id="'+esc(j.id)+'" data-state="applied">Applied ✓</button>'+
-          '<button class="btn statebtn" data-job-id="'+esc(j.id)+'" data-state="ignored">Ignore</button>'+
-          '<span class="small">'+esc(state[j.id]||"new")+'</span>'+
-        '</div></section>';
-    }).join("");
-  }
-  root.querySelectorAll(".pack").forEach(b=>b.addEventListener("click",()=>showPack(b.dataset.jobId)));
-  root.querySelectorAll(".statebtn").forEach(b=>b.addEventListener("click",()=>setState(b.dataset.jobId,b.dataset.state)));
-  root.querySelectorAll("[data-state-id]").forEach(a=>a.addEventListener("click",()=>setState(a.dataset.stateId,"saved")));
-  document.getElementById("applied").textContent=Object.values(state).filter(x=>x==="applied").length;
-}
-async function loadJobs(force=false){
-  const u=document.getElementById("updated");
-  u.textContent="Scanning live sources…";
-  try{
-    const r=await fetch("/api/jobs?min_score=35&refresh="+(force?1:0),{cache:"no-store"});
-    if(!r.ok) throw new Error("Job scan returned "+r.status);
-    const d=await r.json();
-    all=d.jobs||[];
-    document.getElementById("total").textContent=all.length;
-    document.getElementById("excellent").textContent=all.filter(x=>x.score>=82).length;
-    document.getElementById("strong").textContent=all.filter(x=>x.score>=68&&x.score<82).length;
-    u.textContent="Updated "+new Date(d.updated_at).toLocaleString();
-    render();
-  }catch(e){
-    u.textContent="Scan error";
-    document.getElementById("jobs").innerHTML='<div class="empty"><b>Job feed error.</b><br>'+esc(e.message)+'<br><br>Press Scan now to retry.</div>';
-  }
-}
-document.getElementById("q").addEventListener("input",render);
-document.getElementById("min").addEventListener("change",render);
-document.getElementById("status").addEventListener("change",render);
-document.querySelector(".top .primary").addEventListener("click",()=>loadJobs(true));
-loadJobs(false);
-setInterval(()=>loadJobs(false),900000);
-</script></body></html>""")
+@app.get("/application/{job_id}",response_class=HTMLResponse)
+async def application_page(job_id:str):
+    jobs=await scan(False)
+    job=get_job_by_id(job_id,jobs)
+    if not job: raise HTTPException(404,"Job not found")
+    p=application_pack(job)
+    import html as _html
+    def h(s): return _html.escape(str(s or ""))
+    answers="".join(f"<h3>{h(q)}</h3><p>{h(a)}</p>" for q,a in p["answers"].items())
+    gaps=", ".join(p["gaps"]) if p["gaps"] else "No major gap detected by the automated check."
+    jid=urllib.parse.quote(job_id,safe="")
+    return HTMLResponse(f"""<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Application Pack</title><style>
+body{{margin:0;font-family:Inter,system-ui;background:linear-gradient(180deg,#fffef7,#eef7ee);color:#183126}}.w{{max-width:900px;margin:auto;padding:28px 18px}}.hero,.box{{background:white;border:1px solid #e1e9d9;border-radius:20px;padding:22px;box-shadow:0 10px 30px rgba(30,70,40,.08);margin-bottom:14px}}.hero{{background:linear-gradient(125deg,#123524,#2b633f);color:white}}h1{{margin:0 0 8px}}h2{{font-size:16px;color:#2a6b43;margin-top:0}}h3{{font-size:14px;margin-bottom:4px}}p{{line-height:1.6}}pre{{white-space:pre-wrap;font:inherit;line-height:1.6}}.btn{{display:inline-block;text-decoration:none;padding:11px 14px;border-radius:11px;background:#f5d747;color:#294116;font-weight:800;margin-right:8px}}.btn.alt{{background:#eef7e9;color:#235739}}
+</style></head><body><div class="w"><div class="hero"><h1>{h(job["title"])}</h1><div>{h(job["company"])} · {h(job.get("location") or "Remote")} · {job["score"]}% fit</div></div>
+<div class="box"><a class="btn" href="{h(job["url"])}" target="_blank">Apply ↗</a><a class="btn alt" href="/api/cv/{jid}.pdf">Download tailored CV</a></div>
+<div class="box"><h2>Tailored summary</h2><p>{h(p["summary"])}</p></div><div class="box"><h2>Cover note</h2><pre>{h(p["cover_letter"])}</pre></div><div class="box"><h2>Likely application answers</h2>{answers}</div><div class="box"><h2>Check before submitting</h2><p>{h(gaps)}</p></div></div></body></html>""")

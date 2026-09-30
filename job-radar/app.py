@@ -13,6 +13,9 @@ app = FastAPI(title="Anthony Job Radar")
 CACHE={"ts":0,"jobs":[]}
 
 STRONG=["claude","chatgpt","llm","generative ai","ai automation","agent","prompt","python","fastapi","api","webhook","sql","postgresql","supabase","javascript","typescript","react","next.js","git","github","cloud","automation","workflow","systems integration","application support","it support","network","telecommunications","fiber","database","data","assessment","training","curriculum","quality assurance","banking","reconciliation","compliance","technical documentation"]
+PRIORITY_COMPANIES=["dangote"]
+PRIORITY_LOCATIONS=["mombasa","kenya","nairobi"]
+
 PENALTIES=[("phd",18),("doctorate",18),("master's degree required",14),("masters degree required",14),("10+ years",18),("8+ years",14),("7+ years",10),("director",10),("vice president",14),("chief ",14),("c-level",14)]
 
 def clean(s):
@@ -30,6 +33,12 @@ def score_job(j):
     if any(x in title for x in ["ai","automation","agent","llm","full stack","backend","application","systems","telecom","data","sql","it support"]): score+=12
     for phrase,p in PENALTIES:
         if phrase in text: score-=p
+    priority_company=any(x in (j.get("company","")+" "+j.get("source","")).lower() for x in PRIORITY_COMPANIES)
+    priority_location=any(x in text for x in PRIORITY_LOCATIONS)
+    if priority_company: score+=8
+    if priority_company and priority_location: score+=6
+    j["priority_company"]=priority_company
+    j["priority_location"]=priority_location
     score=max(10,min(98,score))
     j["score"]=score
     j["band"]="Excellent fit" if score>=82 else "Strong fit" if score>=68 else "Possible fit" if score>=55 else "Stretch"
@@ -54,6 +63,34 @@ async def fetch_arbeitnow(client):
     except Exception: pass
     return out
 
+async def fetch_dangote(client):
+    out=[]
+    try:
+        base="https://careers.dangote.com"
+        r=await client.get(base+"/go/Roles-At-Dangote/9056002/",headers={"User-Agent":"Mozilla/5.0"},timeout=20)
+        html=r.text
+        matches=re.findall(r'href=["\\\']([^"\\\']*/job/[^"\\\']+)["\\\'][^>]*>(.*?)</a>',html,re.I|re.S)
+        seen=set()
+        for href,label in matches:
+            title=clean(label)
+            if not title or len(title)<3: continue
+            url=urllib.parse.urljoin(base,href)
+            if url in seen: continue
+            seen.add(url)
+            pos=html.find(href)
+            snippet=clean(html[max(0,pos-900):pos+1600])
+            loc=""
+            lm=re.search(r"Location\s*[:\-]?\s*([^|•<>]{2,90})",snippet,re.I)
+            if lm: loc=clean(lm.group(1))[:90]
+            out.append({"id":"dang-"+str(abs(hash(url))),"source":"Dangote Careers","title":title,
+                        "company":"Dangote Industries Limited","location":loc or "Africa",
+                        "url":url,"description":snippet[:1800],"tags":"dangote cement africa mombasa kenya engineering technology operations",
+                        "posted":""})
+            if len(out)>=80: break
+    except Exception:
+        pass
+    return out
+
 async def fetch_remoteok(client):
     out=[]
     try:
@@ -69,7 +106,7 @@ async def scan(force=False):
     if not force and CACHE["jobs"] and now-CACHE["ts"]<900:
         return CACHE["jobs"]
     async with httpx.AsyncClient(follow_redirects=True) as client:
-        chunks=await asyncio.gather(fetch_remotive(client),fetch_arbeitnow(client),fetch_remoteok(client))
+        chunks=await asyncio.gather(fetch_remotive(client),fetch_arbeitnow(client),fetch_remoteok(client),fetch_dangote(client))
     seen=set(); jobs=[]
     for x in sum(chunks,[]):
         key=(x["title"].lower().strip(),x["company"].lower().strip())
@@ -269,9 +306,12 @@ async def api_jobs(refresh:int=0, min_score:int=35):
 async def home(refresh:int=0, min_score:int=55):
     jobs=await scan(bool(refresh))
     visible=[j for j in jobs if j.get("score",0)>=min_score][:60]
+    dangote=[j for j in jobs if "dangote" in (j.get("company","")+" "+j.get("source","")).lower()]
+    dangote_mombasa=[j for j in dangote if "mombasa" in (j.get("location","")+" "+j.get("description","")).lower()]
     excellent=sum(1 for j in jobs if j.get("score",0)>=82)
     strong=sum(1 for j in jobs if 68<=j.get("score",0)<82)
     total=len(jobs)
+    ready=sum(1 for j in jobs if j.get("score",0)>=68)
     def h(s):
         import html as _html
         return _html.escape(str(s or ""))
@@ -301,13 +341,17 @@ async def home(refresh:int=0, min_score:int=55):
 .stats{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}}.stat{{position:relative;overflow:hidden;background:rgba(255,255,255,.93);border:1px solid rgba(230,234,220,.95);padding:18px;border-radius:19px;box-shadow:var(--shadow-soft)}}.stat:before{{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:linear-gradient(180deg,var(--emerald),var(--sun))}}.stat b{{font-size:29px;display:block}}.stat span{{color:var(--muted);font-size:13px;font-weight:650}}
 .controls{{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:rgba(255,255,255,.92);padding:13px;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-soft)}}.controls a{{text-decoration:none}}.pill{{padding:9px 12px;border-radius:999px;border:1px solid #dfe7d6;color:#315c3e;background:#fffef8;font-size:13px;font-weight:700}}.pill.active{{background:#204d35;color:#fff;border-color:#204d35}}.updated{{margin-left:auto;background:#f8f8ea;padding:7px 10px;border-radius:999px;color:var(--muted);font-size:12px}}
 .layout{{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;margin-top:18px}}.jobs{{display:grid;gap:13px}}.card{{position:relative;background:rgba(255,255,255,.95);border:1px solid #e4eadc;border-radius:20px;padding:19px;box-shadow:var(--shadow-soft);transition:.2s ease;overflow:hidden}}.card:after{{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--emerald),var(--lime),var(--sun))}}.card:hover{{transform:translateY(-2px);box-shadow:var(--shadow)}}.row{{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}}.title{{font-weight:850;font-size:18px;line-height:1.28}}.meta{{color:var(--muted);font-size:13px;margin:6px 0 11px}}.chips{{display:flex;gap:7px;flex-wrap:wrap}}.chip{{font-size:12px;padding:5px 9px;border-radius:999px;background:var(--soft-green);color:#28633f;border:1px solid #d4ead4;font-weight:650}}.score{{font-weight:850;font-size:14px;min-width:80px;text-align:center;padding:8px 10px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}}.excellent{{color:#185d31;background:#e9f7e8;border-color:#bde1bd}}.strong{{color:#536614;background:#f5f9db;border-color:#dde9a8}}.possible{{color:#7a5d08;background:var(--soft-yellow);border-color:#f0df8a}}.stretch{{color:#7e6131;background:#fff3df;border-color:#eed5ae}}.actions{{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}}
-.side{{background:linear-gradient(180deg,#173a29,#234d35);color:#fff;border-radius:22px;padding:18px;height:max-content;position:sticky;top:15px;box-shadow:0 15px 34px rgba(29,68,44,.17)}}.side h3{{margin:0 0 9px;font-size:16px}}.side .small{{color:#cadccb}}.source{{display:flex;color:#eef7df;text-decoration:none;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.11);font-weight:650}}.source:hover{{color:#ffe96c}}.small{{font-size:12px;color:var(--muted);line-height:1.5}}.empty{{padding:48px 20px;text-align:center;color:var(--muted);background:rgba(255,255,255,.78);border:1px dashed #d9e3cf;border-radius:20px}}
+.side{{background:linear-gradient(180deg,#173a29,#234d35);color:#fff;border-radius:22px;padding:18px;height:max-content;position:sticky;top:15px;box-shadow:0 15px 34px rgba(29,68,44,.17)}}.side h3{{margin:0 0 9px;font-size:16px}}.side .small{{color:#cadccb}}.watch{{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.11)}}.watch span{{font-size:12px;color:#d8e8d6}}.source{{display:flex;color:#eef7df;text-decoration:none;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.11);font-weight:650}}.source:hover{{color:#ffe96c}}.small{{font-size:12px;color:var(--muted);line-height:1.5}}.empty{{padding:48px 20px;text-align:center;color:var(--muted);background:rgba(255,255,255,.78);border:1px dashed #d9e3cf;border-radius:20px}}
 @media(max-width:900px){{.layout{{grid-template-columns:1fr}}.side{{position:static}}.stats{{grid-template-columns:1fr 1fr}}}}@media(max-width:590px){{.wrap{{padding:16px 12px 28px}}.top{{padding:22px 18px;align-items:flex-start;flex-direction:column}}.brand h1{{font-size:29px}}.stats{{grid-template-columns:1fr 1fr}}.btn{{padding:9px 11px}}.stat{{padding:15px}}}}
 </style></head><body><div class="wrap">
 <div class="top"><div class="brand"><div class="eyebrow">● LIVE CAREER RADAR</div><h1>Anthony Job Radar</h1><p>High-fit roles first. Tailored CV ready. You review and apply.</p></div><a class="btn primary" href="/?refresh=1&min_score={min_score}">Scan now</a></div>
-<div class="stats"><div class="stat"><b>{excellent}</b><span>Excellent fit</span></div><div class="stat"><b>{strong}</b><span>Strong fit</span></div><div class="stat"><b>—</b><span>Application tracking</span></div><div class="stat"><b>{total}</b><span>Live jobs scanned</span></div></div>
+<div class="stats"><div class="stat"><b>{excellent}</b><span>Excellent fit</span></div><div class="stat"><b>{strong}</b><span>Strong fit</span></div><div class="stat"><b>{ready}</b><span>Application packs ready</span></div><div class="stat"><b>{total}</b><span>Live jobs scanned</span></div></div>
 <div class="controls"><a class="pill {'active' if min_score==55 else ''}" href="/?min_score=55">55%+ fit</a><a class="pill {'active' if min_score==68 else ''}" href="/?min_score=68">68%+ strong</a><a class="pill {'active' if min_score==82 else ''}" href="/?min_score=82">82%+ excellent</a><span class="updated">Showing {len(visible)} jobs · server-rendered</span></div>
-<div class="layout"><main class="jobs">{cards_html}</main><aside class="side"><h3>Source launcher</h3><p class="small">Live API feeds are scanned automatically. Use these extra channels for listings that block automated ingestion.</p>
+<div class="layout"><main class="jobs">{cards_html}</main><aside class="side"><h3>Priority watchlist</h3>
+<div class="watch"><b>Dangote</b><span>{len(dangote)} openings seen</span></div>
+<div class="watch"><b>Mombasa match</b><span>{len(dangote_mombasa)} openings seen</span></div>
+<a class="source" target="_blank" href="https://careers.dangote.com/go/Roles-At-Dangote/9056002/">Dangote Careers ↗</a>
+<h3 style="margin-top:18px">Source launcher</h3><p class="small">Live API feeds are scanned automatically. Use these extra channels for listings that block automated ingestion.</p>
 <a class="source" target="_blank" href="https://www.linkedin.com/jobs/search/?keywords=AI%20Automation&location=Kenya">LinkedIn ↗</a><a class="source" target="_blank" href="https://www.brightermonday.co.ke/jobs">BrighterMonday ↗</a><a class="source" target="_blank" href="https://www.fuzu.com/kenya/job">Fuzu ↗</a><a class="source" target="_blank" href="https://www.myjobmag.co.ke/">MyJobMag Kenya ↗</a><a class="source" target="_blank" href="https://www.careerpointkenya.co.ke/jobs/">Career Point Kenya ↗</a><a class="source" target="_blank" href="https://wellfound.com/jobs">Wellfound ↗</a><a class="source" target="_blank" href="https://remoteok.com/">Remote OK ↗</a><a class="source" target="_blank" href="https://remotive.com/remote-jobs">Remotive ↗</a>
 <h3 style="margin-top:18px">Best-fit tracks</h3><div class="small">AI automation · AI/LLM evaluation · Full-stack/backend · Applications & systems integration · IT support · Telecom · SQL/data · Technical training</div></aside></div>
 </div></body></html>""")

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "leadpilot-ai",
+  "version": "0.2.0",
+  "description": "Find sales leads, identify conversations needing replies, draft grounded follow-ups, prepare booking options, and create sales briefings.",
+  "author": { "name": "LeadPilot AI" },
+  "license": "Proprietary",
+  "keywords": ["sales", "leads", "follow-up", "crm", "email", "meetings"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "LeadPilot AI",
+        "shortDescription": "Turn conversations into sales",
+        "longDescription": "LeadPilot helps salespeople and small businesses identify high-intent leads, find conversations that need replies, draft grounded follow-ups, prepare meeting options from verified availability, and generate concise sales briefings. This MVP operates only on data supplied to its tools and does not send messages or create calendar events.",
+        "developerName": "LeadPilot AI",
+        "category": "Productivity",
+        "capabilities": ["Lead scoring", "Reply triage", "Follow-up drafting", "Booking preparation", "Sales briefings"],
+        "defaultPrompt": ["Find the strongest leads in these messages.", "Who needs a reply right now?", "Give me today's sales briefing."],
+        "brandColor": "#176B3A"
+      }
+    }
+  }
+}

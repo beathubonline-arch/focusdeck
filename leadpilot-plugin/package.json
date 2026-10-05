@@ -1,0 +1,14 @@
+{
+  "name": "leadpilot-plugin",
+  "version": "0.2.0",
+  "type": "module",
+  "description": "LeadPilot AI MCP server for lead discovery, reply triage, follow-up drafting, booking preparation, and sales briefings.",
+  "main": "server.js",
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node server.js", "test": "node test.js" },
+  "dependencies": {
+    "@modelcontextprotocol/node": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "zod": "^4.1.0"
+  }
+}

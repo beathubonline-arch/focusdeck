@@ -12,8 +12,8 @@ const conversations=[{id:'c1',name:'Jane',email:'jane@example.com',messages:[{te
 
 function validateSubmissionPackage(){
  const manifest=JSON.parse(fs.readFileSync(new URL('./plugin.json',import.meta.url),'utf8'));
- const i=manifest.extensions?.com?.openai?.interface;
- assert.equal(manifest.version,'0.4.0');
+ const i=manifest.extensions?.['com.openai']?.interface;
+ assert.equal(manifest.version,'0.5.0');
  assert.ok(i);
  for(const k of ['displayName','shortDescription','longDescription','developerName','category','websiteURL','supportURL','privacyPolicyURL','termsOfServiceURL','logo','composerIcon']) assert.ok(i[k],`missing ${k}`);
  assert.ok(i.shortDescription.length<=30);

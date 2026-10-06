@@ -13,7 +13,7 @@ const conversations=[{id:'c1',name:'Jane',email:'jane@example.com',messages:[{te
 function validateSubmissionPackage(){
  const manifest=JSON.parse(fs.readFileSync(new URL('./plugin.json',import.meta.url),'utf8'));
  const i=manifest.extensions?.['com.openai']?.interface;
- assert.equal(manifest.version,'0.5.0');
+ assert.equal(manifest.version,'0.6.0');
  assert.ok(i);
  for(const k of ['displayName','shortDescription','longDescription','developerName','category','websiteURL','supportURL','privacyPolicyURL','termsOfServiceURL','logo','composerIcon']) assert.ok(i[k],`missing ${k}`);
  assert.ok(i.shortDescription.length<=30);
@@ -26,8 +26,8 @@ function validateSubmissionPackage(){
    assert.match(svg,/viewBox="0 0 (128|512) (128|512)"/);
  }
  const review=JSON.parse(fs.readFileSync(new URL('./review-tests.json',import.meta.url),'utf8'));
- assert.ok(review.positive.length>=5);
- assert.ok(review.negative.length>=3);
+ assert.equal(manifest.extensions?.['com.openai']?.review?.test_cases?.positive?.length,5);
+ assert.equal(manifest.extensions?.['com.openai']?.review?.test_cases?.negative?.length,3);
 }
 
 for(let pass=1;pass<=2;pass++){

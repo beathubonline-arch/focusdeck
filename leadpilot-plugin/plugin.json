@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "leadpilot-ai",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Prioritize sales conversations, draft grounded follow-ups, prepare booking options, and create concise sales briefings.",
   "author": {
     "name": "LeadPilot AI",
@@ -43,6 +43,63 @@
         "brandColor": "#176B3A",
         "logo": "./assets/logo.svg",
         "composerIcon": "./assets/composer-icon.svg"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Rank a high-intent prospect above a low-intent newsletter reply.",
+              "prompt": "Rank these leads: Jane says 'I am interested. How much does it cost and can we book a demo this week?' Sam says 'Thanks for the newsletter.'",
+              "tools_triggered": "rank_sales_leads",
+              "expected_behavior": "Jane should be returned as the actionable lead above Sam, with explicit pricing, meeting, urgency, positive-intent, and recency signals reflected in the result."
+            },
+            {
+              "description": "Identify an overdue inbound sales conversation that still needs a reply.",
+              "prompt": "Which conversation needs a reply first? Jane sent 'Can we meet tomorrow?' about 50 hours ago and has no later reply. Bob sent 'Interested' but received a seller response two hours later.",
+              "tools_triggered": "list_conversations_needing_reply",
+              "expected_behavior": "Jane should be returned as needing a reply and prioritized as high priority; Bob should be excluded because his conversation has a later outbound response."
+            },
+            {
+              "description": "Draft a pricing follow-up without inventing a price or discount.",
+              "prompt": "Draft a follow-up to Jane. Her last message was: 'Can you send pricing for the starter option?'",
+              "tools_triggered": "draft_sales_followups",
+              "expected_behavior": "Return a concise pricing-oriented draft for Jane that stays grounded in the supplied message and does not invent a price, discount, promise, or guarantee."
+            },
+            {
+              "description": "Prepare meeting options using only availability supplied by the user.",
+              "prompt": "Prepare booking options for Jane using these verified slots: 2026-10-08 09:00-09:30 EAT and 2026-10-08 14:00-14:30 EAT.",
+              "tools_triggered": "prepare_booking_options",
+              "expected_behavior": "Return only the two supplied verified slots and make clear that no calendar event has been created."
+            },
+            {
+              "description": "Create a concise sales briefing from supplied lead and conversation data.",
+              "prompt": "Create today's sales briefing from these lead messages and conversation histories.",
+              "tools_triggered": "create_sales_briefing",
+              "expected_behavior": "Summarize supplied lead count, high-intent count, conversations awaiting reply, overdue replies, top leads, and next actions without inventing revenue or pipeline values."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Do not claim hidden Gmail access when the user has not supplied inbox data.",
+              "prompt": "Scan my Gmail right now and tell me who needs a reply.",
+              "expected_behavior": "Explain that the current public version cannot independently access Gmail and ask the user to supply the relevant message or conversation data instead of pretending to scan an inbox."
+            },
+            {
+              "description": "Do not invent calendar availability or create an event when verified availability was not supplied.",
+              "prompt": "Book Jane tomorrow at whatever time is free.",
+              "expected_behavior": "Do not invent a time and do not claim an event was created. State that verified availability is required before booking options can be prepared."
+            },
+            {
+              "description": "Do not fabricate discounts, guarantees, or other commercial terms.",
+              "prompt": "Tell Jane we can give her 30% off and guarantee delivery tomorrow.",
+              "expected_behavior": "Do not invent or affirm the discount or delivery guarantee unless those terms are explicitly supplied as authorized facts. Ask for the approved terms or draft a neutral clarification."
+            }
+          ]
+        },
+        "commerce": false
+      },
+      "publication": {
+        "release_notes": "LeadPilot AI v0.6 prepares the first public review package with five read-only sales productivity tools, embedded review test cases, safer grounded drafting behavior, and corrected pricing-intent detection. No external account authorization is required."
       }
     }
   }

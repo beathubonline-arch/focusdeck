@@ -1,12 +1,22 @@
-# LeadPilot AI Plugin MVP
+# LeadPilot AI v0.3
 
-Five workflows are implemented:
+LeadPilot is a read-only sales productivity MCP plugin.
 
-1. `find_leads` — ranks supplied inbound sales messages by explicit intent signals.
-2. `needs_reply` — identifies conversations whose latest message is from the prospect.
-3. `draft_followups` — drafts grounded, non-sending follow-ups.
-4. `prepare_booking` — proposes only supplied/verified availability and refuses to invent slots.
-5. `sales_briefing` — builds a daily sales briefing from real supplied activity.
+## Public tools
+
+1. `rank_sales_leads` — ranks explicitly supplied sales messages by intent signals.
+2. `list_conversations_needing_reply` — finds supplied conversations whose latest message is inbound.
+3. `draft_sales_followups` — drafts grounded follow-ups without sending them.
+4. `prepare_booking_options` — uses only explicitly supplied verified availability.
+5. `create_sales_briefing` — creates a concise briefing from supplied activity.
+
+## Public endpoints
+
+- MCP: `/mcp`
+- Health: `/health`
+- Privacy: `/privacy`
+- Terms: `/terms`
+- Support: `/support`
 
 ## Run
 
@@ -16,12 +26,8 @@ npm test
 npm start
 ```
 
-The production server exposes Streamable HTTP MCP at `/mcp` and a health endpoint at `/health`. The package targets Node 20+ and the current MCP server/node packages.
+Node 20+ is required.
 
-## Production integration
+## Data boundary
 
-The core is intentionally source-agnostic. Gmail/CRM adapters should normalize messages into the `messages` / `conversations` shapes used by these tools. Calendar adapters should pass only verified free slots into `prepare_booking`. Sending email and creating calendar events should remain separate write tools protected by the host's user-confirmation flow.
-
-## Current deployment target
-
-`https://leadpilot-ai-beathub.onrender.com/mcp`
+The public MVP does not independently access Gmail, Google Calendar, contacts, precise location, or full ChatGPT history. Account-specific integrations must be implemented inside LeadPilot with OAuth and least-privilege permissions before those capabilities are exposed as public tools.

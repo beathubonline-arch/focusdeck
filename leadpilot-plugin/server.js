@@ -7,7 +7,7 @@ import { homePage, privacyPage, termsPage, supportPage } from './public.js';
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
-const VERSION = '0.5.0';
+const VERSION = '0.6.0';
 
 const Message = z.object({
   id: z.string().optional(), name: z.string().optional(), from: z.string().optional(),

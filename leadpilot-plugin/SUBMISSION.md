@@ -1,4 +1,4 @@
-# LeadPilot AI v0.4 — Submission Materials
+# LeadPilot AI v0.6 — Submission Materials
 
 ## Submission type
 With MCP + uploaded skill.
@@ -20,13 +20,13 @@ https://leadpilot-ai-beathub.onrender.com/mcp
 3. Create a concise sales briefing from this lead data.
 
 ## Reviewer notes
-LeadPilot v0.4 is intentionally read-only. It does not require authentication. It operates only on lead, conversation, and availability data explicitly supplied to a tool call. It does not access Gmail, Google Calendar, contacts, CRM accounts, or full ChatGPT history. It does not send messages or create calendar events.
+LeadPilot v0.6 is intentionally read-only. It does not require authentication. It operates only on lead, conversation, and availability data explicitly supplied to a tool call. It does not access Gmail, Google Calendar, contacts, CRM accounts, or full ChatGPT history. It does not send messages or create calendar events.
 
 ## Test cases
-Use review-tests.json. It contains five positive and three negative cases and requires no demo credentials.
+Five positive and three negative review cases are embedded directly in plugin.json under extensions.com.openai.review. No demo credentials are required.
 
-## Initial release notes
-Initial public submission of LeadPilot AI. The plugin provides five read-only sales productivity tools for lead prioritization, reply triage, grounded follow-up drafting, booking preparation using verified supplied availability, and concise sales briefings. No external account authorization is required in this version.
+## Release notes
+LeadPilot AI v0.6 public review candidate. The plugin provides five read-only sales productivity tools for lead prioritization, reply triage, grounded follow-up drafting, booking preparation using verified supplied availability, and concise sales briefings. No external account authorization is required in this version.
 
 ## Availability recommendation
 Start with countries where the publisher can support the product and where the public terms/privacy disclosures are appropriate. Expand after the first approved release and support process are stable.

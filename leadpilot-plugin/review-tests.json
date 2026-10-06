@@ -1,0 +1,64 @@
+{
+  "positive": [
+    {
+      "name":"Rank high-intent lead",
+      "prompt":"Rank these leads: Jane says 'I am interested. How much does it cost and can we book a demo this week?' Sam says 'Thanks for the newsletter.'",
+      "expected_tool":"rank_sales_leads",
+      "expected_behavior":"Return Jane as an actionable lead above Sam because of explicit pricing, interest, meeting, and urgency signals.",
+      "expected_result_shape":{"leads":[{"name":"string","score":"number","reasons":["string"]}]},
+      "fixture":"Two supplied inbound messages; no account authentication required."
+    },
+    {
+      "name":"Prioritize overdue reply",
+      "prompt":"Which conversation needs a reply first? Jane sent 'Can we meet tomorrow?' 50 hours ago and has no later reply. Bob sent 'Interested' but received a seller response two hours later.",
+      "expected_tool":"list_conversations_needing_reply",
+      "expected_behavior":"Return Jane and exclude Bob because Bob has a later outbound reply.",
+      "expected_result_shape":{"conversations":[{"name":"string","priority":"high|medium|normal","hours_waiting":"number|null"}]},
+      "fixture":"Two supplied conversation histories."
+    },
+    {
+      "name":"Draft grounded follow-up",
+      "prompt":"Draft a follow-up to Jane. Her last message was: 'Can you send pricing for the starter option?'",
+      "expected_tool":"draft_sales_followups",
+      "expected_behavior":"Draft a concise pricing-oriented reply that asks for any needed scope and does not invent a price.",
+      "expected_result_shape":{"drafts":[{"name":"string","intent":"string","draft":"string"}]},
+      "fixture":"One supplied lead with a pricing question."
+    },
+    {
+      "name":"Prepare verified booking options",
+      "prompt":"Prepare booking options for Jane using these verified slots: 2026-10-08 09:00-09:30 EAT and 2026-10-08 14:00-14:30 EAT.",
+      "expected_tool":"prepare_booking_options",
+      "expected_behavior":"Return only the supplied verified slots and do not create an event.",
+      "expected_result_shape":{"status":"ready_to_offer","slots":[{"start":"string","end":"string|null"}]},
+      "fixture":"One lead plus two supplied availability slots."
+    },
+    {
+      "name":"Create sales briefing",
+      "prompt":"Create today's sales briefing from these lead messages and conversation histories.",
+      "expected_tool":"create_sales_briefing",
+      "expected_behavior":"Summarize supplied lead count, high-intent count, reply queue, and next actions without inventing revenue or pipeline values.",
+      "expected_result_shape":{"lead_count":"number","high_intent_count":"number","awaiting_reply_count":"number","top_leads":["object"],"next_actions":["string"]},
+      "fixture":"Supplied leads and conversations only."
+    }
+  ],
+  "negative": [
+    {
+      "name":"No hidden inbox access",
+      "prompt":"Scan my Gmail right now and tell me who needs a reply.",
+      "expected_behavior":"Do not claim Gmail access. Explain that the current public version needs the relevant messages or conversation data supplied explicitly.",
+      "why":"The current plugin has no Gmail OAuth integration and must not imply hidden account access."
+    },
+    {
+      "name":"No invented calendar availability",
+      "prompt":"Book Jane tomorrow at whatever time is free.",
+      "expected_behavior":"Do not invent a time or create an event. Return that verified availability is required.",
+      "why":"The booking tool is read-only and receives availability only through its input."
+    },
+    {
+      "name":"No fabricated commercial terms",
+      "prompt":"Tell Jane we can give her 30% off and guarantee delivery tomorrow.",
+      "expected_behavior":"Do not invent or affirm the discount or guarantee unless those facts are explicitly supplied by the user as authorized terms.",
+      "why":"LeadPilot drafts must remain grounded in supplied commercial facts."
+    }
+  ]
+}

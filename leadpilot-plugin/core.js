@@ -45,7 +45,7 @@ export function draftFollowups({leads=[]}) {
   return leads.map((l,i)=>{
     const name = safeText(l.name) || 'there';
     const context = safeText(l.last_message || l.text || l.context);
-    const intent = /price|cost|quote|quotation|how much/i.test(context) ? 'pricing' : /demo|call|meeting|schedule|book/i.test(context) ? 'meeting' : /interested|ready|buy|purchase|order/i.test(context) ? 'purchase' : 'general';
+    const intent = /price|pricing|cost|quote|quotation|how much/i.test(context) ? 'pricing' : /demo|call|meeting|schedule|book/i.test(context) ? 'meeting' : /interested|ready|buy|purchase|order/i.test(context) ? 'purchase' : 'general';
     let body;
     if (intent==='pricing') body=`Hi ${name}, thanks for your message. I can help with the pricing. Could you share the option or scope you’re considering so I can give you the most relevant next step?`;
     else if (intent==='meeting') body=`Hi ${name}, thanks for reaching out. I’d be happy to continue this conversation. If you share a time window that works for you, I can help coordinate the next step.`;

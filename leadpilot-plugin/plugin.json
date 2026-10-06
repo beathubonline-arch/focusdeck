@@ -1,26 +1,49 @@
 {
-  "$schema":"https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name":"leadpilot-ai",
-  "version":"0.4.0",
-  "description":"Prioritize sales conversations, draft grounded follow-ups, prepare booking options, and create concise sales briefings.",
-  "author":{"name":"LeadPilot AI","url":"https://leadpilot-ai-beathub.onrender.com/"},
-  "homepage":"https://leadpilot-ai-beathub.onrender.com/",
-  "license":"Proprietary",
-  "keywords":["sales","leads","follow-up","crm","productivity"],
-  "extensions":{"com.openai":{"interface":{
-    "displayName":"LeadPilot AI",
-    "shortDescription":"Prioritize sales follow-ups",
-    "longDescription":"LeadPilot AI helps salespeople, founders, agencies, consultants, and small businesses prioritize explicitly supplied sales conversations, identify prospects waiting for a reply, draft grounded follow-up messages, prepare meeting options from verified availability, and create concise sales briefings. The current public version is read-only: it does not access Gmail, contacts, or calendars on its own, send messages, create calendar events, or invent missing commercial information.",
-    "developerName":"LeadPilot AI",
-    "category":"Productivity",
-    "capabilities":["Lead prioritization","Reply triage","Follow-up drafting","Booking preparation","Sales briefings"],
-    "websiteURL":"https://leadpilot-ai-beathub.onrender.com/",
-    "supportURL":"https://leadpilot-ai-beathub.onrender.com/support",
-    "privacyPolicyURL":"https://leadpilot-ai-beathub.onrender.com/privacy",
-    "termsOfServiceURL":"https://leadpilot-ai-beathub.onrender.com/terms",
-    "defaultPrompt":["Rank these sales leads and explain the strongest buying signals.","Which of these conversations need a reply first?","Create a concise sales briefing from this lead data."],
-    "brandColor":"#176B3A",
-    "logo":"./assets/logo.svg",
-    "composerIcon":"./assets/composer-icon.svg"
-  }}}
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "leadpilot-ai",
+  "version": "0.5.0",
+  "description": "Prioritize sales conversations, draft grounded follow-ups, prepare booking options, and create concise sales briefings.",
+  "author": {
+    "name": "LeadPilot AI",
+    "url": "https://leadpilot-ai-beathub.onrender.com/"
+  },
+  "homepage": "https://leadpilot-ai-beathub.onrender.com/",
+  "license": "Proprietary",
+  "keywords": [
+    "sales",
+    "leads",
+    "follow-up",
+    "crm",
+    "productivity"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "LeadPilot AI",
+        "shortDescription": "Prioritize sales follow-ups",
+        "longDescription": "LeadPilot AI helps salespeople, founders, agencies, consultants, and small businesses prioritize explicitly supplied sales conversations, identify prospects waiting for a reply, draft grounded follow-up messages, prepare meeting options from verified availability, and create concise sales briefings. The current public version is read-only: it does not access Gmail, contacts, or calendars on its own, send messages, create calendar events, or invent missing commercial information.",
+        "developerName": "LeadPilot AI",
+        "category": "Productivity",
+        "capabilities": [
+          "Lead prioritization",
+          "Reply triage",
+          "Follow-up drafting",
+          "Booking preparation",
+          "Sales briefings"
+        ],
+        "websiteURL": "https://leadpilot-ai-beathub.onrender.com/",
+        "supportURL": "https://leadpilot-ai-beathub.onrender.com/support",
+        "privacyPolicyURL": "https://leadpilot-ai-beathub.onrender.com/privacy",
+        "termsOfServiceURL": "https://leadpilot-ai-beathub.onrender.com/terms",
+        "defaultPrompt": [
+          "Rank these sales leads and explain the strongest buying signals.",
+          "Which of these conversations need a reply first?",
+          "Create a concise sales briefing from this lead data."
+        ],
+        "brandColor": "#176B3A",
+        "logo": "./assets/logo.svg",
+        "composerIcon": "./assets/composer-icon.svg"
+      }
+    }
+  }
 }

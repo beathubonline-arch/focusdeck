@@ -39,6 +39,7 @@ async function account(req){
  const {rows}=await getPool().query(`SELECT a.id,a.email,s.id AS session_id FROM leadpilot_private.sessions s JOIN leadpilot_private.accounts a ON a.id=s.account_id WHERE s.token_hash=$1 AND s.expires_at>now() AND s.revoked_at IS NULL`,[digest(token)]);
  return rows[0]||null;
 }
+export const getAuthenticatedAccount=account;
 export async function accountApi(req,res,path){
  if(!path.startsWith('/api/'))return false;
  if(!['GET','POST'].includes(req.method)){respond(res,405,{error:'Method not allowed'});return true;}

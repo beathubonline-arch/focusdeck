@@ -22,7 +22,7 @@ for(let pass=1;pass<=2;pass++){
  assert.match(checkout.authorization_url,/^https:\/\/checkout\.paystack\.com\//);
  assert.equal(kesAmount('pro',env),120000);
  const body=Buffer.from(JSON.stringify({event:'charge.success',data:{reference:'lp_test'}}));
- const sig=createHmac('sha256',env.PAYSTACK_SECRET_KEY).update(body).digest('hex');
+ const sig=createHmac('sha512',env.PAYSTACK_SECRET_KEY).update(body).digest('hex');
  assert.equal(validatePaystackWebhook(body,sig,env.PAYSTACK_SECRET_KEY).event,'charge.success');
  assert.throws(()=>validatePaystackWebhook(body,'bad',env.PAYSTACK_SECRET_KEY));
  assert.equal(canConsume('free','none','monthlyLeads',24),true);

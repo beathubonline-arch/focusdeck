@@ -35,7 +35,7 @@ export const accountPage=page('Sales workspace',`
  <script>
  const state=document.getElementById('account-state'),results=document.getElementById('results'),usage=document.getElementById('usage'),button=document.getElementById('logout');
  async function refreshUsage(){
- try{const r=await fetch('/api/usage',{credentials:'same-origin'});if(r.ok){const d=await r.json();const counts=Object.fromEntries(d.usage.map(x=>[x.metric,Number(x.used)]));usage.textContent='Free plan usage this month: '+(counts.monthlyLeads||0)+'/25 leads · '+(counts.monthlyDrafts||0)+'/10 drafts. Paid plans require activation.';}}
+ try{const r=await fetch('/api/usage',{credentials:'same-origin'});if(r.ok){const d=await r.json();const counts=Object.fromEntries(d.usage.map(x=>[x.metric,Number(x.used)]));const tier=d.subscription?.status==='active'||d.subscription?.status==='trialing'?d.subscription.plan:'free';const caps={free:[25,10],pro:[500,200],business:[3000,1500],agency:[15000,7500]};const limits=caps[tier]||caps.free;usage.textContent='Plan: '+tier+' · This month: '+(counts.monthlyLeads||0)+'/'+limits[0]+' leads · '+(counts.monthlyDrafts||0)+'/'+limits[1]+' drafts.';}}
  catch{usage.textContent='Usage currently unavailable';}
  }
  fetch('/api/me',{credentials:'same-origin'}).then(async r=>{

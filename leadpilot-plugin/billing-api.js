@@ -1,6 +1,5 @@
 import {getPool} from './database.js';
-import {createPaystackCheckout,getPaystackConfig,validatePaystackWebhook} from './paystack.js';
-import {PRICING} from './pricing.js';
+import {createPaystackCheckout,getPaystackConfig,validatePaystackWebhook,kesAmount} from './paystack.js';
 import {getAuthenticatedAccount} from './account-api.js';
 
 const send=(res,status,value)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});res.end(JSON.stringify(value));};
@@ -43,7 +42,7 @@ async function settle(reference,secret){
 export async function billingApi(req,res,path,url){
  try{
   const config=getPaystackConfig();
-  if(path==='/api/billing/config'&&req.method==='GET'){send(res,200,{enabled:config.enabled&&config.usdApproved&&config.secret.startsWith('sk_live_'),currency:'USD',billing:'30-day access, renew manually'});return;}
+  if(path==='/api/billing/config'&&req.method==='GET'){send(res,200,{enabled:config.enabled&&config.secret.startsWith('sk_live_')&&['pro','business','agency'].every(p=>{try{kesAmount(p);return true;}catch{return false;}}),currency:'KES',billing:'30-day access, renew manually'});return;}
   if(path==='/api/paystack/webhook'&&req.method==='POST'){
    if(!config.secret){send(res,503,{error:'Billing not configured'});return;}
    const raw=await readBody(req);
@@ -56,13 +55,13 @@ export async function billingApi(req,res,path,url){
   }
   if(path==='/api/billing/checkout'&&req.method==='POST'){
    if(!trustedOrigin(req)){send(res,403,{error:'Origin rejected'});return;}
-   if(!config.enabled||!config.usdApproved||!config.secret.startsWith('sk_live_')){send(res,503,{error:'Live USD checkout not enabled'});return;}
+   if(!config.enabled||!config.secret.startsWith('sk_live_')){send(res,503,{error:'Live KES checkout not enabled'});return;}
    const user=await getAuthenticatedAccount(req);
    if(!user){send(res,401,{error:'Sign in required'});return;}
    const input=JSON.parse((await readBody(req,4096)).toString('utf8'));
    if(!plans.has(input.plan)){send(res,400,{error:'Choose a paid plan'});return;}
    const result=await createPaystackCheckout({email:user.email,accountId:user.id,plan:input.plan,callbackUrl:'https://leadpilot-ai-beathub.onrender.com/account'});
-   await getPool().query('INSERT INTO leadpilot_private.checkout_intents(reference,account_id,plan,amount,currency) VALUES($1,$2,$3,$4,$5)',[result.reference,user.id,input.plan,PRICING[input.plan].monthlyUsd*100,'USD']);
+   await getPool().query('INSERT INTO leadpilot_private.checkout_intents(reference,account_id,plan,amount,currency) VALUES($1,$2,$3,$4,$5)',[result.reference,user.id,input.plan,kesAmount(input.plan),'KES']);
    send(res,200,{authorization_url:result.authorization_url});return;
   }
   if(path==='/api/billing/verify'&&req.method==='POST'){

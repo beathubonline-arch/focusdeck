@@ -1,6 +1,7 @@
 import { createServer as createHttpServer } from 'node:http';
 import { databaseStatus, closeDatabase } from './database.js';
 import { accountApi } from './account-api.js';
+import { signupPage, loginPage, accountPage } from './account-pages.js';
 import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import * as z from 'zod/v4';
@@ -85,7 +86,7 @@ function buildServer() {
 
 const handler=createMcpHandler(buildServer);
 const nodeHandler=toNodeHandler(handler);
-const pages=new Map([['/',homePage],['/privacy',privacyPage],['/terms',termsPage],['/support',supportPage],['/pricing',pricingPage],['/workspace-preview',dashboardPreviewPage]]);
+const pages=new Map([['/',homePage],['/privacy',privacyPage],['/terms',termsPage],['/support',supportPage],['/pricing',pricingPage],['/workspace-preview',dashboardPreviewPage],['/signup',signupPage],['/login',loginPage],['/account',accountPage]]);
 
 const httpServer=createHttpServer((req,res)=>{
   const url=new URL(req.url||'/',`http://${req.headers.host||'localhost'}`);

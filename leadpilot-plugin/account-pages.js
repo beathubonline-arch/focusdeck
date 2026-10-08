@@ -26,7 +26,7 @@ export const loginPage=formPage('login');
 export const accountPage=page('Sales workspace',`
  <h1>Your sales workspace</h1>
  <p id="account-state">Checking your account…</p>
- <div class="card"><h2>Plans & upgrades</h2><p>Global plans are priced at $9, $29 and $79. Until USD checkout is approved, Paystack charges in KES. You can upgrade at any time.</p><div id="upgrade-plans"><button class="cta" data-plan="pro" style="border:0;cursor:pointer">Pro $9 · Pay KSh 1,200 / 30 days</button> <button class="cta" data-plan="business" style="border:0;cursor:pointer">Business $29 · Pay KSh 3,800 / 30 days</button> <button class="cta" data-plan="agency" style="border:0;cursor:pointer">Agency $79 · Pay KSh 10,000 / 30 days</button></div><p id="upgrade-notice" aria-live="polite" class="muted">Checking secure checkout availability…</p></div>
+ <div class="card"><h2>Plans & upgrades</h2><p>Choose the plan that fits your business. Upgrade at any time.</p><div id="upgrade-plans"><button class="cta" data-plan="pro" style="border:0;cursor:pointer">Pro $9 / 30 days</button> <button class="cta" data-plan="business" style="border:0;cursor:pointer">Business $29 / 30 days</button> <button class="cta" data-plan="agency" style="border:0;cursor:pointer">Agency $79 / 30 days</button></div><p id="upgrade-notice" aria-live="polite" class="muted">Checking secure checkout availability…</p></div>
  <div class="pricing">
  <section class="card"><h2>Rank sales leads</h2><p>Paste one prospect message per line. Each submitted message counts toward your monthly lead allowance.</p><textarea id="lead-input" rows="7" placeholder="Hi, can you send your pricing?\\nI'd like to book a demo tomorrow." style="width:100%;padding:14px;border-radius:12px;background:#0d2020;color:white;border:1px solid #567469"></textarea><p><button id="rank" class="cta" style="border:0;cursor:pointer">Rank leads</button></p></section>
  <section class="card"><h2>Draft follow-ups</h2><p>Enter one prospect message per line. Drafts are suggestions only; nothing is sent.</p><textarea id="draft-input" rows="7" placeholder="Could you send me a quote?" style="width:100%;padding:14px;border-radius:12px;background:#0d2020;color:white;border:1px solid #567469"></textarea><p><button id="draft" class="cta" style="border:0;cursor:pointer">Prepare drafts</button></p></section>
@@ -64,7 +64,7 @@ export const accountPage=page('Sales workspace',`
   history.replaceState(null,'','/account');
  }
  fetch('/api/billing/config').then(r=>r.json()).then(d=>{
-  if(!returnedReference)upgradeNotice.textContent=d.enabled?'Secure Paystack checkout in KES available. Global USD prices are display-only until USD approval. Each payment buys 30 days; renewal is manual.':'Payments are not enabled yet. Please do not send money.';
+  if(!returnedReference)upgradeNotice.textContent=d.enabled?'Secure checkout available. Your final payable amount and currency will be shown before you confirm payment. Each purchase buys 30 days; renewal is manual.':'Payments are not enabled yet. Please do not send money.';
   document.querySelectorAll('[data-plan]').forEach(b=>b.disabled=!d.enabled);
  }).catch(()=>{upgradeNotice.textContent='Checkout unavailable.';document.querySelectorAll('[data-plan]').forEach(b=>b.disabled=true);});
  document.querySelectorAll('[data-plan]').forEach(b=>b.addEventListener('click',async()=>{

@@ -3,7 +3,7 @@ import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import * as z from 'zod/v4';
 import { findLeads, needsReply, draftFollowups, prepareBooking, salesBriefing } from './core.js';
-import { homePage, privacyPage, termsPage, supportPage, pricingPage } from './public.js';
+import { homePage, privacyPage, termsPage, supportPage, pricingPage, dashboardPreviewPage } from './public.js';
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -83,7 +83,7 @@ function buildServer() {
 
 const handler=createMcpHandler(buildServer);
 const nodeHandler=toNodeHandler(handler);
-const pages=new Map([['/',homePage],['/privacy',privacyPage],['/terms',termsPage],['/support',supportPage],['/pricing',pricingPage]]);
+const pages=new Map([['/',homePage],['/privacy',privacyPage],['/terms',termsPage],['/support',supportPage],['/pricing',pricingPage],['/workspace-preview',dashboardPreviewPage]]);
 
 const httpServer=createHttpServer((req,res)=>{
   const url=new URL(req.url||'/',`http://${req.headers.host||'localhost'}`);

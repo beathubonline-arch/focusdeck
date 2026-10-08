@@ -62,7 +62,7 @@ export const accountPage=page('Sales workspace',`
  }).catch(()=>{});
  document.getElementById('google-scan').addEventListener('click',async()=>{
   const note=document.getElementById('google-note');note.textContent='Scanning Gmail…';
-  try{const r=await fetch('/api/google/scan',{method:'POST',credentials:'same-origin'}),d=await r.json();if(!r.ok)throw Error(d.error||'Scan failed');results.textContent=JSON.stringify({leads:d.leads,drafts:d.drafts},null,2);note.textContent='Scanned '+d.scanned+' messages.';}catch(e){note.textContent=e.message;}
+  try{const r=await fetch('/api/google/scan',{method:'POST',credentials:'same-origin'});const type=r.headers.get('content-type')||'';if(!type.includes('application/json'))throw Error('LeadPilot server is temporarily unavailable or deploying. Wait a moment and retry.');const d=await r.json();if(!r.ok)throw Error(d.error||'Scan failed');results.textContent=JSON.stringify({leads:d.leads,drafts:d.drafts},null,2);note.textContent='Scanned '+d.scanned+' messages · '+(d.qualified??d.leads?.length??0)+' qualified · '+(d.excluded??0)+' excluded.';}catch(e){note.textContent=e.message;}
  });
  const upgradeNotice=document.getElementById('upgrade-notice');
  const returnedReference=new URLSearchParams(location.search).get('reference');

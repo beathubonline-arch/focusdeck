@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { PRICING, effectivePlan, canConsume } from './pricing.js';
 import {findLeads,needsReply,draftFollowups,prepareBooking,salesBriefing} from './core.js';
 import {homePage,privacyPage,termsPage,supportPage} from './public.js';
 
@@ -39,5 +40,10 @@ for(let pass=1;pass<=2;pass++){
  const brief=salesBriefing({leads:messages,conversations},now);assert.equal(brief.lead_count,1);assert.equal(brief.awaiting_reply_count,1);
  for(const p of [homePage,privacyPage,termsPage,supportPage]){assert.ok(p.includes('<!doctype html>'));assert.ok(p.includes('LeadPilot'));}
  validateSubmissionPackage();
+ assert.deepEqual(['free','pro','business','agency'].map(p=>PRICING[p].monthlyUsd),[0,9,29,79]);
+ assert.equal(effectivePlan('agency','canceled'),'free');
+ assert.equal(effectivePlan('pro','active'),'pro');
+ assert.equal(canConsume('free','none','monthlyLeads',25),false);
+ assert.equal(canConsume('pro','active','monthlyLeads',499),true);
  console.log(`PASS ${pass}: five tools + policy pages + submission package`);
 }

@@ -1,0 +1,26 @@
+name: LeadPilot CI
+on:
+  push:
+    branches: [leadpilot-usd-billing, leadpilot-mvp]
+  pull_request:
+    paths:
+      - 'leadpilot-plugin/**'
+      - '.github/workflows/leadpilot-ci.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: leadpilot-plugin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: leadpilot-plugin/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: node pricing.test.js
+      - run: node billing-security.test.js
+      - run: node paystack.test.js

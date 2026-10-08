@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { PRICING, effectivePlan, canConsume } from './pricing.js';
+import { createHmac } from 'node:crypto';
+import { verifyHmacSha256, verifiedSubscriptionEvent } from './billing-security.js';
 import {findLeads,needsReply,draftFollowups,prepareBooking,salesBriefing} from './core.js';
 import {homePage,privacyPage,termsPage,supportPage} from './public.js';
 
@@ -39,6 +41,11 @@ for(let pass=1;pass<=2;pass++){
  assert.equal(prepareBooking({lead:nr[0],availability:[{start:'2026-10-07T09:00:00+03:00'}]}).status,'ready_to_offer');
  const brief=salesBriefing({leads:messages,conversations},now);assert.equal(brief.lead_count,1);assert.equal(brief.awaiting_reply_count,1);
  for(const p of [homePage,privacyPage,termsPage,supportPage]){assert.ok(p.includes('<!doctype html>'));assert.ok(p.includes('LeadPilot'));}
+ const body=Buffer.from(JSON.stringify({id:'evt_test',type:'subscription.updated'}));
+ const sig=createHmac('sha256','test-only-secret').update(body).digest('hex');
+ assert.equal(verifyHmacSha256(body,sig,'test-only-secret'),true);
+ assert.equal(verifyHmacSha256(Buffer.from('tampered'),sig,'test-only-secret'),false);
+ assert.equal(verifiedSubscriptionEvent(body,sig,'test-only-secret').id,'evt_test');
  validateSubmissionPackage();
  assert.deepEqual(['free','pro','business','agency'].map(p=>PRICING[p].monthlyUsd),[0,9,29,79]);
  assert.equal(effectivePlan('agency','canceled'),'free');

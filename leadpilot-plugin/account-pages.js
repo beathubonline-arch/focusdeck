@@ -27,6 +27,7 @@ export const accountPage=page('Sales workspace',`
  <h1>Your sales workspace</h1>
  <p id="account-state">Checking your account…</p>
  <div class="card"><h2>Plans & upgrades</h2><p>Choose the plan that fits your business. Upgrade at any time.</p><div id="upgrade-plans"><button class="cta" data-plan="pro" style="border:0;cursor:pointer">Pro $9 / 30 days</button> <button class="cta" data-plan="business" style="border:0;cursor:pointer">Business $29 / 30 days</button> <button class="cta" data-plan="agency" style="border:0;cursor:pointer">Agency $79 / 30 days</button></div><p id="upgrade-notice" aria-live="polite" class="muted">Checking secure checkout availability…</p></div>
+ <div class="card"><h2>Connect your email inbox</h2><p>Scan recent inquiries from supported IMAP providers. No password is saved and no emails are sent. Gmail and Outlook integrations require separate authorization.</p><form id="email-form" style="display:grid;gap:10px;max-width:480px"><label>Provider<select name="provider" required style="padding:12px"><option value="yahoo">Yahoo</option><option value="icloud">iCloud</option><option value="zoho">Zoho</option><option value="aol">AOL</option><option value="fastmail">Fastmail</option></select></label><label>Email<input name="email" type="email" autocomplete="username" required style="padding:12px"></label><label>App-specific password<input name="appPassword" type="password" autocomplete="off" required style="padding:12px"></label><button class="cta" type="submit">Scan recent inbox messages</button></form><p id="email-status" aria-live="polite">Your credentials are used only for this scan.</p></div>
  <div class="pricing">
  <section class="card"><h2>Rank sales leads</h2><p>Paste one prospect message per line. Each submitted message counts toward your monthly lead allowance.</p><textarea id="lead-input" rows="7" placeholder="Hi, can you send your pricing?\\nI'd like to book a demo tomorrow." style="width:100%;padding:14px;border-radius:12px;background:#0d2020;color:white;border:1px solid #567469"></textarea><p><button id="rank" class="cta" style="border:0;cursor:pointer">Rank leads</button></p></section>
  <section class="card"><h2>Draft follow-ups</h2><p>Enter one prospect message per line. Drafts are suggestions only; nothing is sent.</p><textarea id="draft-input" rows="7" placeholder="Could you send me a quote?" style="width:100%;padding:14px;border-radius:12px;background:#0d2020;color:white;border:1px solid #567469"></textarea><p><button id="draft" class="cta" style="border:0;cursor:pointer">Prepare drafts</button></p></section>
@@ -75,6 +76,12 @@ export const accountPage=page('Sales workspace',`
   location.assign(d.authorization_url);
   }catch(e){upgradeNotice.textContent=e.message;b.disabled=false;}
  }));
+ document.getElementById('email-form').addEventListener('submit',async e=>{
+ e.preventDefault();const form=e.currentTarget,status=document.getElementById('email-status');
+ status.textContent='Scanning inbox securely…';
+ const data=Object.fromEntries(new FormData(form));form.elements.appPassword.value='';
+ try{const response=await fetch('/api/email/scan',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify(data)});const output=await response.json();if(!response.ok)throw new Error(output.error||'Scan failed');status.textContent='Scanned '+output.scanned+' recent messages. Review the ranked leads and drafts below.';results.textContent=JSON.stringify({leads:output.leads,drafts:output.drafts},null,2);}catch(error){status.textContent=error.message;}
+});
  document.getElementById('rank').addEventListener('click',()=>run('rank'));
  document.getElementById('draft').addEventListener('click',()=>run('draft'));
  button.addEventListener('click',async()=>{await fetch('/api/logout',{method:'POST',credentials:'same-origin'});location.assign('/login');});

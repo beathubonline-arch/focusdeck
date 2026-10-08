@@ -47,7 +47,7 @@ for(let pass=1;pass<=2;pass++){
  assert.equal(verifyHmacSha256(body,sig,'test-only-secret'),true);
  assert.equal(verifyHmacSha256(Buffer.from('tampered'),sig,'test-only-secret'),false);
  assert.equal(verifiedSubscriptionEvent(body,sig,'test-only-secret').id,'evt_test');
- assert.ok(dashboardPreviewPage.includes('DEMO DATA ONLY'));
+ assert.ok(dashboardPreviewPage.includes('PRIVATE BROWSER WORKSPACE'));
  assert.ok(pricingPage.includes('$79'));
  assert.ok(pricingPage.includes('payments are not yet enabled'));
  const pw=hashPassword('correct horse battery staple');

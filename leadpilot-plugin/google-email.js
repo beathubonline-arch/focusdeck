@@ -36,7 +36,7 @@ async function scan(token){
   const items=(await tr.json()).messages||[];
   const last=items[items.length-1];
   const from=last?.payload?.headers?.find(h=>h.name.toLowerCase()==='from')?.value||'';
-  const address=(from.match(/[\\w.+-]+@[\\w.-]+\\.[A-Za-z]{2,}/)||[])[0]?.toLowerCase()||'';
+  const address=(from.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}/)||[])[0]?.toLowerCase()||'';
   threadStates.set(id,{awaitingReply:!!address&&address!==owner,messageCount:items.length});
  }
  const {candidates,excluded,review}=filterSalesInbox(messages);

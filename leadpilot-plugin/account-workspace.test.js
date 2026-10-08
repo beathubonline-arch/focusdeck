@@ -7,6 +7,8 @@ assert.match(loginPage, /\/api\/login/);
 assert.match(accountPage, /\/api\/leads\/rank/);
 assert.match(accountPage, /\/api\/followups\/draft/);
 assert.match(accountPage, /\/api\/usage/);
+assert.match(accountPage, /d.subscription/);
+assert.match(accountPage, /limits\[0\]/);
 assert.match(accountPage, /\/api\/logout/);
 assert.equal(PRICING.free.monthlyLeads,25);
 assert.equal(PRICING.free.monthlyDrafts,10);

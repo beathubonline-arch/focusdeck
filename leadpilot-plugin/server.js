@@ -107,7 +107,7 @@ const httpServer=createHttpServer((req,res)=>{
   }
 
   if(req.method==='GET' && pages.has(url.pathname)){
-    res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'public, max-age=300'});
+    res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':url.pathname==='/account'?'no-store, max-age=0':'public, max-age=300'});
     res.end(pages.get(url.pathname)); return;
   }
 

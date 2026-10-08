@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import { signupPage,loginPage,accountPage } from './account-pages.js';
+import { databaseConfigured } from './database.js';
+import { PRICING } from './pricing.js';
+assert.match(signupPage, /\/api\/signup/);
+assert.match(loginPage, /\/api\/login/);
+assert.match(accountPage, /\/api\/leads\/rank/);
+assert.match(accountPage, /\/api\/followups\/draft/);
+assert.match(accountPage, /\/api\/usage/);
+assert.match(accountPage, /\/api\/logout/);
+assert.equal(PRICING.free.monthlyLeads,25);
+assert.equal(PRICING.free.monthlyDrafts,10);
+assert.equal(typeof databaseConfigured(),'boolean');
+console.log('LeadPilot account workspace smoke tests passed');

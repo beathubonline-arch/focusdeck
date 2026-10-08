@@ -26,6 +26,7 @@ export const loginPage=formPage('login');
 export const accountPage=page('Sales workspace',`
  <h1>Your sales workspace</h1>
  <p id="account-state">Checking your account…</p>
+ <div class="card"><h2>Plans & upgrades</h2><p>You can upgrade at any time; you do not need to exhaust your free leads.</p><div id="upgrade-plans"><a href="/pricing" class="cta">Explore paid plans →</a></div><p id="upgrade-notice" aria-live="polite" class="muted">Secure checkout is being finalized. No payment will be charged from this page yet.</p></div>
  <div class="pricing">
  <section class="card"><h2>Rank sales leads</h2><p>Paste one prospect message per line. Each submitted message counts toward your monthly lead allowance.</p><textarea id="lead-input" rows="7" placeholder="Hi, can you send your pricing?\\nI'd like to book a demo tomorrow." style="width:100%;padding:14px;border-radius:12px;background:#0d2020;color:white;border:1px solid #567469"></textarea><p><button id="rank" class="cta" style="border:0;cursor:pointer">Rank leads</button></p></section>
  <section class="card"><h2>Draft follow-ups</h2><p>Enter one prospect message per line. Drafts are suggestions only; nothing is sent.</p><textarea id="draft-input" rows="7" placeholder="Could you send me a quote?" style="width:100%;padding:14px;border-radius:12px;background:#0d2020;color:white;border:1px solid #567469"></textarea><p><button id="draft" class="cta" style="border:0;cursor:pointer">Prepare drafts</button></p></section>
@@ -50,7 +51,7 @@ export const accountPage=page('Sales workspace',`
  results.textContent='Processing…';
  try{
  const r=await fetch(ranking?'/api/leads/rank':'/api/followups/draft',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify(payload)});
- const d=await r.json();results.textContent=r.ok?JSON.stringify(ranking?d.leads:d.drafts,null,2):(d.error||'Request failed');refreshUsage();
+ const d=await r.json();results.textContent=r.ok?JSON.stringify(ranking?d.leads:d.drafts,null,2):(d.error||'Request failed');if(r.status===429){document.getElementById('upgrade-notice').textContent='Free allowance reached. View paid plans above; checkout will be available once enabled.';document.getElementById('upgrade-plans').scrollIntoView({behavior:'smooth'});}refreshUsage();
  }catch{results.textContent='Service unavailable. Please retry.';}
  }
  document.getElementById('rank').addEventListener('click',()=>run('rank'));

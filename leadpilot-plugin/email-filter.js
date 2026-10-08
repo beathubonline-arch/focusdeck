@@ -1,15 +1,17 @@
-const automated=/\b(?:no[._-]?reply|do[._-]?not[._-]?reply|mailer-daemon|postmaster|notifications?|newsletter|marketing|updates?)@/i;
-const sales=/\b(?:quote|quotation|pricing|price|cost|budget|proposal|estimate|book a (?:call|demo|meeting)|schedule a (?:call|demo|meeting)|interested in (?:your|the)|can you (?:provide|send|share)|would like to (?:buy|purchase|hire)|how much|availability|need your services)\b/i;
-const noise=/\b(?:unsubscribe|view in browser|manage preferences|password reset|verify your email|account activation|payment receipt|transaction alert|weekly digest|special offer|course categories)\b/i;
+const automated=/^(?:no[._-]?reply|do[._-]?not[._-]?reply|mailer-daemon|postmaster|notifications?|newsletter|marketing|updates?)@/i;
+const sales=/\\b(?:quote|quotation|pricing|price|cost|budget|proposal|estimate|book a (?:call|demo|meeting)|schedule a (?:call|demo|meeting)|interested in (?:your|the)|can you (?:provide|send|share)|would like to (?:buy|purchase|hire)|how much|availability|need your services)\\b/i;
+const noise=/\\b(?:unsubscribe|view in browser|manage preferences|password reset|verify your email|account activation|payment receipt|transaction alert|weekly digest|special offer|course categories)\\b/i;
 export function filterSalesInbox(messages){
- const excluded=[],candidates=[];
+ const excluded=[],candidates=[],review=[];
  for(const m of messages){
-  const from=String(m.from||''),email=(from.match(/<([^<>\s]+@[^<>\s]+)>/)||from.match(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/)||[])[1]||'';
-  const address=email||((from.match(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/)||[])[0]||'');
+  const from=String(m.from||'');
+  const address=(from.match(/[\\w.+-]+@[\\w.-]+\\.[A-Za-z]{2,}/)||[])[0]||'';
   const subject=String(m.subject||''),body=String(m.text||''),content=subject+' '+body;
-  const reason=automated.test(address)?'automated sender':noise.test(content)?'newsletter or transactional notification':!sales.test(content)?'no clear sales inquiry':null;
-  if(reason){excluded.push({id:m.id,reason});continue;}
-  candidates.push({...m,name:from.replace(/<[^>]+>/g,'').replace(/^["']|["']$/g,'').trim()||address,email:address});
+  const base={...m,name:from.replace(/<[^>]+>/g,'').replace(/^["']|["']$/g,'').trim()||address,email:address};
+  if(m.automated||automated.test(address)||noise.test(content)){excluded.push({...base,reason:'automated, marketing or transactional'});continue;}
+  if(!address){review.push({...base,reason:'sender address missing'});continue;}
+  if(!sales.test(content)){review.push({...base,reason:'sales intent unclear'});continue;}
+  candidates.push(base);
  }
- return {candidates,excluded};
+ return {candidates,excluded,review};
 }

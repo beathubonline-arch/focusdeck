@@ -39,11 +39,11 @@ async function scan(token){
   const address=(from.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}/)||[])[0]?.toLowerCase()||'';
   threadStates.set(id,{awaitingReply:!!address&&address!==owner,messageCount:items.length});
  }
- const {candidates,excluded,review}=filterSalesInbox(messages);
+ const {candidates,excluded,review,actionRequired,notifications}=filterSalesInbox(messages);
  const actionable=candidates.filter(m=>threadStates.get(m.threadId)?.awaitingReply!==false);
  const leads=findLeads({messages:actionable}).map(m=>({...m,threadId:messages.find(x=>x.id===m.id)?.threadId||null,priority:m.score>=65?'high':m.score>=45?'medium':'normal',nextAction:'Review and reply'}));
  const drafts=draftFollowups({leads:leads.slice(0,10).map(m=>({...m,last_message:m.text}))});
- return {scanned:messages.length,qualified:leads.length,review,ignored:excluded,leads,drafts,threadContext:true,note:'Read-only Gmail access. No emails were sent.'};
+ return {scanned:messages.length,qualified:leads.length,actionRequired,review,notifications,ignored:excluded,leads,drafts,threadContext:true,note:'Read-only Gmail access. No emails were sent.'};
 }
 async function refreshAccess(accountId){
  const record=await loadConnection(accountId);

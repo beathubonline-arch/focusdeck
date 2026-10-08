@@ -1,7 +1,7 @@
 export function page(title, body) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} | LeadPilot AI</title><style>
-  :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#102117;background:#f6fbf7}body{margin:0}.wrap{max-width:860px;margin:0 auto;padding:48px 22px 80px}header{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:42px}.brand{font-weight:800;font-size:20px;color:#176b3a}.pill{font-size:13px;background:#e7f5ec;border:1px solid #c8e7d2;border-radius:999px;padding:7px 11px}h1{font-size:42px;line-height:1.05;margin:0 0 18px}h2{margin-top:34px}p,li{line-height:1.65;color:#33463a}a{color:#176b3a}.card{background:#fff;border:1px solid #dfeae2;border-radius:20px;padding:24px;box-shadow:0 10px 30px rgba(23,107,58,.06)}nav{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;margin-top:34px}
-  </style></head><body><div class="wrap"><header><div class="brand">LeadPilot AI</div><div class="pill">Sales follow-up assistant</div></header>${body}<nav><a href="/">Home</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/support">Support</a><a href="/health">Status</a></nav></div></body></html>`;
+  :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#102117;background:#f6fbf7}body{margin:0}.wrap{max-width:1060px;margin:0 auto;padding:48px 22px 80px}header{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:42px}.brand{font-weight:800;font-size:20px;color:#176b3a}.pill{font-size:13px;background:#e7f5ec;border:1px solid #c8e7d2;border-radius:999px;padding:7px 11px}h1{font-size:42px;line-height:1.05;margin:0 0 18px}h2{margin-top:34px}p,li{line-height:1.65;color:#33463a}a{color:#176b3a}.pricing{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:25px 0}.price{font-size:36px;font-weight:850;color:#123f26}.muted{font-size:13px;color:#64776b}.cta{display:inline-block;background:#176b3a;color:white;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:700}.card{background:#fff;border:1px solid #dfeae2;border-radius:20px;padding:24px;box-shadow:0 10px 30px rgba(23,107,58,.06)}nav{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;margin-top:34px}
+  </style></head><body><div class="wrap"><header><div class="brand">LeadPilot AI</div><div class="pill">Sales follow-up assistant</div></header>${body}<nav><a href="/">Home</a><a href="/pricing">Pricing</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/support">Support</a><a href="/health">Status</a></nav></div></body></html>`;
 }
 
 export const homePage = page('Home', `
@@ -33,4 +33,16 @@ export const supportPage = page('Support', `
   <h1>LeadPilot Support</h1><p>LeadPilot is currently in MVP testing.</p>
   <div class="card"><strong>When reporting a problem</strong><p>Include the tool name, approximate time of the failure, and the error message. Do not include passwords, access tokens, payment credentials, or unnecessary personal information.</p></div>
   <h2>Service checks</h2><p>Use <a href="/health">/health</a> to confirm whether the LeadPilot service is online.</p>
+`);
+
+export const pricingPage = page('Pricing', `
+ <h1>One assistant. More conversations closed.</h1>
+ <p>Start with a free workspace. Upgrade when your pipeline grows. All prices in USD per month; payments are not yet enabled.</p>
+ <section class="pricing">
+ <div class="card"><h2>Free</h2><div class="price">$0</div><p>25 leads · 10 drafts · 1 seat</p><p class="muted">Explore the five sales tools with your own supplied data.</p></div>
+ <div class="card"><h2>Pro</h2><div class="price">$9<span class="muted">/mo</span></div><p>500 leads · 200 drafts · 1 seat</p><p class="muted">For independent sellers building a consistent follow-up routine.</p></div>
+ <div class="card"><h2>Business</h2><div class="price">$29<span class="muted">/mo</span></div><p>3,000 leads · 1,500 drafts · 5 seats</p><p class="muted">For small sales teams coordinating outreach.</p></div>
+ <div class="card"><h2>Agency</h2><div class="price">$79<span class="muted">/mo</span></div><p>15,000 leads · 7,500 drafts · 20 seats</p><p class="muted">For agencies managing multiple sellers.</p></div>
+ </section>
+ <div class="card"><strong>Early access</strong><p>LeadPilot currently provides lead scoring, reply triage, draft follow-ups, booking preparation and sales summaries from information you supply. Paid checkout, accounts and automatic sending are not yet available.</p><a class="cta" href="/">Explore LeadPilot</a></div>
 `);

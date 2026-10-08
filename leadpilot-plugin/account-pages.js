@@ -26,7 +26,7 @@ export const loginPage=formPage('login');
 export const accountPage=page('Sales workspace',`
  <h1>Your sales workspace</h1>
  <p id="account-state">Checking your account…</p>
- <div class="card"><h2>Plans & upgrades</h2><p>You can upgrade at any time; you do not need to exhaust your free leads.</p><div id="upgrade-plans"><a href="/pricing" class="cta">Explore paid plans →</a></div><p id="upgrade-notice" aria-live="polite" class="muted">Secure checkout is being finalized. No payment will be charged from this page yet.</p></div>
+ <div class="card"><h2>Plans & upgrades</h2><p>You can upgrade at any time; you do not need to exhaust your free leads.</p><div id="upgrade-plans"><button class="cta" data-plan="pro" style="border:0;cursor:pointer">Pro $9 / 30 days</button> <button class="cta" data-plan="business" style="border:0;cursor:pointer">Business $29 / 30 days</button> <button class="cta" data-plan="agency" style="border:0;cursor:pointer">Agency $79 / 30 days</button></div><p id="upgrade-notice" aria-live="polite" class="muted">Checking secure checkout availability…</p></div>
  <div class="pricing">
  <section class="card"><h2>Rank sales leads</h2><p>Paste one prospect message per line. Each submitted message counts toward your monthly lead allowance.</p><textarea id="lead-input" rows="7" placeholder="Hi, can you send your pricing?\\nI'd like to book a demo tomorrow." style="width:100%;padding:14px;border-radius:12px;background:#0d2020;color:white;border:1px solid #567469"></textarea><p><button id="rank" class="cta" style="border:0;cursor:pointer">Rank leads</button></p></section>
  <section class="card"><h2>Draft follow-ups</h2><p>Enter one prospect message per line. Drafts are suggestions only; nothing is sent.</p><textarea id="draft-input" rows="7" placeholder="Could you send me a quote?" style="width:100%;padding:14px;border-radius:12px;background:#0d2020;color:white;border:1px solid #567469"></textarea><p><button id="draft" class="cta" style="border:0;cursor:pointer">Prepare drafts</button></p></section>
@@ -54,6 +54,19 @@ export const accountPage=page('Sales workspace',`
  const d=await r.json();results.textContent=r.ok?JSON.stringify(ranking?d.leads:d.drafts,null,2):(d.error||'Request failed');if(r.status===429){document.getElementById('upgrade-notice').textContent='Free allowance reached. View paid plans above; checkout will be available once enabled.';document.getElementById('upgrade-plans').scrollIntoView({behavior:'smooth'});}refreshUsage();
  }catch{results.textContent='Service unavailable. Please retry.';}
  }
+ const upgradeNotice=document.getElementById('upgrade-notice');
+ fetch('/api/billing/config').then(r=>r.json()).then(d=>{
+  upgradeNotice.textContent=d.enabled?'Secure Paystack checkout available. Each payment buys 30 days; renewal is manual.':'Payments are not enabled yet. Please do not send money.';
+  document.querySelectorAll('[data-plan]').forEach(b=>b.disabled=!d.enabled);
+ }).catch(()=>{upgradeNotice.textContent='Checkout unavailable.';document.querySelectorAll('[data-plan]').forEach(b=>b.disabled=true);});
+ document.querySelectorAll('[data-plan]').forEach(b=>b.addEventListener('click',async()=>{
+  b.disabled=true;upgradeNotice.textContent='Preparing secure checkout…';
+  try{const r=await fetch('/api/billing/checkout',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify({plan:b.dataset.plan})});const d=await r.json();
+  if(!r.ok)throw new Error(d.error||'Checkout unavailable');
+  if(!/^https:\\/\\/checkout\\.paystack\\.com\\//.test(d.authorization_url))throw new Error('Invalid checkout URL');
+  location.assign(d.authorization_url);
+  }catch(e){upgradeNotice.textContent=e.message;b.disabled=false;}
+ }));
  document.getElementById('rank').addEventListener('click',()=>run('rank'));
  document.getElementById('draft').addEventListener('click',()=>run('draft'));
  button.addEventListener('click',async()=>{await fetch('/api/logout',{method:'POST',credentials:'same-origin'});location.assign('/login');});

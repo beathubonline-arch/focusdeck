@@ -28,7 +28,7 @@ export async function createPaystackCheckout({email,plan,accountId,callbackUrl,e
   });
   if(!response.ok) throw new Error('Paystack initialization failed');
   const data=await response.json();
-  if(data.status!==true || !data.data?.authorization_url || !data.data?.reference)
+  if(data.status!==true || !data.data?.authorization_url || data.data.reference!==reference || !/^https:\/\/checkout\.paystack\.com\//.test(data.data.authorization_url))
     throw new Error('Paystack did not return valid checkout');
   return {authorization_url:data.data.authorization_url,reference:data.data.reference};
 }

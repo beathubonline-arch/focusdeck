@@ -55,6 +55,14 @@ export const accountPage=page('Sales workspace',`
  }catch{results.textContent='Service unavailable. Please retry.';}
  }
  const upgradeNotice=document.getElementById('upgrade-notice');
+ const returnedReference=new URLSearchParams(location.search).get('reference');
+ if(returnedReference && /^lp_[a-f0-9]{32}$/.test(returnedReference)){
+  upgradeNotice.textContent='Verifying your payment with Paystack…';
+  fetch('/api/billing/verify',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify({reference:returnedReference})})
+   .then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.error||'Verification failed');upgradeNotice.textContent=d.paid?'Payment verified. Your paid access is active.':'Payment not confirmed yet. Please contact support if charged.';refreshUsage();})
+   .catch(e=>{upgradeNotice.textContent='Payment verification unavailable: '+e.message;});
+  history.replaceState(null,'','/account');
+ }
  fetch('/api/billing/config').then(r=>r.json()).then(d=>{
   upgradeNotice.textContent=d.enabled?'Secure Paystack checkout available. Each payment buys 30 days; renewal is manual.':'Payments are not enabled yet. Please do not send money.';
   document.querySelectorAll('[data-plan]').forEach(b=>b.disabled=!d.enabled);

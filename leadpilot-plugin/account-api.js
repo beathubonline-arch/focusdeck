@@ -75,6 +75,10 @@ export async function accountApi(req,res,path){
    if(!Array.isArray(items)||items.length<1||items.length>100||items.some(x=>!x||typeof x!=='object'||Array.isArray(x))){
     respond(res,400,{error:'Provide 1 to 100 valid items'});return true;
    }
+   const fields=ranking?['text','name','email','date','direction','id','subject','from']:['last_message','text','context','name','email','id'];
+   if(items.some(item=>Object.entries(item).some(([key,value])=>fields.includes(key)&& (typeof value!=='string'||value.length>4000)))){
+    respond(res,400,{error:'Invalid item fields or text exceeds 4000 characters'});return true;
+   }
    const metric=ranking?'monthlyLeads':'monthlyDrafts';
    const {rows}=await getPool().query('SELECT * FROM leadpilot_private.consume_usage($1,$2,$3)',[user.id,metric,items.length]);
    const usage=rows[0];
@@ -86,7 +90,9 @@ export async function accountApi(req,res,path){
    const user=await account(req);
    if(!user){respond(res,401,{error:'Sign in required'});return true;}
    const {rows}=await getPool().query(`SELECT metric,used FROM leadpilot_private.usage WHERE account_id=$1 AND period_start=date_trunc('month',now() AT TIME ZONE 'UTC')::date`,[user.id]);
-   respond(res,200,{usage:rows});return true;
+   const {rows:plans}=await getPool().query("SELECT plan,status,period_ends_at FROM leadpilot_private.subscriptions WHERE account_id=$1",[user.id]);
+   const subscription=plans[0]||{plan:'free',status:'active',period_ends_at:null};
+   respond(res,200,{usage:rows,subscription});return true;
   }
   if(path==='/api/logout'&&req.method==='POST'){
    const user=await account(req);

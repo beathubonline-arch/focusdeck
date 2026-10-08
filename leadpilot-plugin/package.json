@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node test.js && node account-workspace.test.js && node gmail-phase.test.js"
+    "test": "node test.js && node account-workspace.test.js && node gmail-phase.test.js && node market-audit.test.js"
   },
   "dependencies": {
     "@modelcontextprotocol/node": "^2.0.0",

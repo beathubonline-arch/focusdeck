@@ -10,14 +10,69 @@ h1{font-size:clamp(40px,6vw,78px);line-height:1.04;letter-spacing:-.065em;max-wi
 nav{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;margin-top:65px;padding-top:25px;border-top:1px solid #ffffff24}nav a{color:#b4d9c7;text-decoration:none}nav a:hover{color:#79ffc1}
 ul{padding-left:23px}li{padding:4px 0}::selection{background:#55e5aa;color:#062018}
 @media(max-width:600px){.wrap{padding:16px 18px 65px}header{margin-bottom:60px}.pill{font-size:10px;padding:7px 9px}.card{padding:20px}.pricing{grid-template-columns:1fr 1fr;gap:10px}.pricing .card{padding:16px}.pricing .card h2{font-size:20px}.price{font-size:34px}p,li{font-size:14px}}@media(max-width:380px){.pricing{grid-template-columns:1fr}}
+
+/* Refraxion-inspired visual language: original LeadPilot execution */
+body{background:radial-gradient(ellipse at 50% 82%,#273146 0%,transparent 44%),#070911;color:#f1f2f7}
+.wrap{max-width:1320px;padding-top:22px}
+header{margin-bottom:56px;border:0}
+.brand{letter-spacing:.23em;text-transform:uppercase;font-size:20px}
+.brand:before{content:'✧';color:#e3c7d7}
+.card{border-color:#ffffff24;background:linear-gradient(145deg,#181b2dba,#0e1423db);box-shadow:0 24px 70px #0006}
+.cta{background:linear-gradient(105deg,#e9dec5,#d9dfea);color:#161b26;border-radius:99px;box-shadow:0 12px 35px #d5c5d21a}
+.pill{border-color:#ddc5d777;background:#e6c7d01a;color:#efdde8}
+h1{letter-spacing:-.055em}
+a{color:#d7c4ed}
+nav a{color:#c4bed0}
+.lp-hero{position:relative;overflow:hidden;text-align:center;border:1px solid #ffffff22;border-radius:38px;padding:76px 32px 90px;background:radial-gradient(ellipse at 50% 110%,#49516d88 0%,transparent 52%),radial-gradient(ellipse at 80% 18%,#232b45 0%,transparent 43%),linear-gradient(160deg,#0b0e18,#171c2b 72%,#0a0d16);box-shadow:0 45px 120px #0008}
+.lp-hero:before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.33;background-image:radial-gradient(#c9c3dd 0.8px,transparent 0.9px);background-size:26px 28px;mask-image:linear-gradient(#000,transparent 88%)}
+.lp-hero>*{position:relative}
+.lp-hero h1{margin:16px auto 20px;max-width:850px;font-size:clamp(45px,6.8vw,86px);line-height:1.08}
+.lp-gradient{background:linear-gradient(100deg,#e7e8f1,#d7b5d3 65%,#a9b5e2);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lp-hero .lp-sub{margin:0 auto 30px;max-width:670px;color:#c9cad9;font-size:clamp(16px,2vw,20px)}
+.lp-actions{max-width:580px;margin:0 auto;display:grid;gap:13px}
+.lp-actions a{width:100%;min-height:56px;display:flex;align-items:center;justify-content:center}
+.lp-outline{border:1px solid #cbd0e355;border-radius:99px;text-decoration:none;color:#f0eefa;font-weight:700;background:#ffffff08}
+.lp-trust{font-size:13px!important;color:#c2c6d3!important;margin:22px auto 30px!important}
+.lp-monitor{max-width:910px;margin:45px auto 0;text-align:left;padding:12px;border:1px solid #ffffff35;border-radius:23px;background:#101521;box-shadow:0 35px 80px #000a,0 0 55px #b5a4dd18;transform:perspective(1300px) rotateX(4deg)}
+.lp-top{display:flex;align-items:center;gap:8px;border-bottom:1px solid #ffffff18;padding:7px 8px 15px;color:#b8c2d6;font-size:12px}
+.lp-dot{height:9px;width:9px;border-radius:50%;background:#d4a9b5}
+.lp-dot:nth-child(2){background:#d4c7a3}.lp-dot:nth-child(3){background:#9ccbb9}
+.lp-body{display:grid;grid-template-columns:170px 1fr;min-height:350px}
+.lp-side{padding:20px 14px;border-right:1px solid #ffffff19;color:#9da9bc;font-size:12px}
+.lp-side div{padding:10px 8px}.lp-side .active{color:#f3efff;border-radius:9px;background:#ffffff15}
+.lp-main{padding:24px;min-width:0}.lp-main h2{margin:0 0 6px;font-size:23px}
+.lp-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}
+.lp-kpi{padding:16px;border:1px solid #ffffff20;border-radius:13px;background:#ffffff07}.lp-kpi strong{display:block;font-size:30px;color:#e7d3ec}
+.lp-kpi small{color:#aab1c2}
+.lp-lead{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid #ffffff20;border-radius:12px;padding:14px;margin:9px 0;background:#ffffff06}
+.lp-lead b{font-size:13px}.lp-lead small{display:block;color:#aeb9c8;margin-top:6px;font-size:11px}
+.lp-signal{color:#b9f0d4;font-size:11px;white-space:nowrap}
+.lp-note{font-size:12px;color:#b9becd;margin-top:12px}
+.lp-section{padding:58px 0 20px}
+@media(max-width:650px){header{margin-bottom:22px}.brand{font-size:16px;letter-spacing:.14em}.lp-hero{padding:54px 18px 44px;border-radius:29px}.lp-hero h1{font-size:clamp(40px,10vw,58px)}.lp-monitor{margin-top:28px;padding:7px;transform:none}.lp-body{grid-template-columns:1fr;min-height:0}.lp-side{display:none}.lp-main{padding:15px}.lp-kpis{gap:6px;margin:14px 0}.lp-kpi{padding:10px}.lp-kpi strong{font-size:22px}.lp-kpi small{font-size:9px}.lp-lead{padding:10px}.lp-lead b{font-size:11px}.lp-signal{font-size:9px}.lp-hero .lp-sub{font-size:16px}.lp-trust{font-size:11px!important}}
 </style></head><body><div class="wrap"><header><div class="brand">LeadPilot AI</div><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><a href="/login">Log in</a><a class="cta" href="/signup">Start free</a></div></header>${body}<nav><a href="/">Home</a><a href="/pricing">Pricing</a><a href="/workspace-preview">Try workspace</a><a href="/signup">Sign up</a><a href="/login">Log in</a><a href="/account">My account</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/support">Support</a><a href="/health">Status</a></nav></div></body></html>`;
 }
 
 export const homePage = page('Home', `
-  <p class="pill" style="display:inline-block;margin-bottom:22px">YOUR AI SALES EMPLOYEE · AVAILABLE 24/7</p><h1>Every lead matters. <span style="color:#6df5b6">Never miss the next sale.</span></h1>
-  <p>LeadPilot AI helps identify high-intent prospects, surface conversations waiting for a reply, draft grounded follow-ups, prepare booking options from verified availability, and summarize sales activity.</p>
-  <p><a class="cta" href="/workspace-preview">Try the interactive demo →</a> <a href="/pricing" style="margin-left:16px">Explore plans</a></p><div class="card"><strong>Privacy-first MVP</strong><p>LeadPilot only processes information explicitly provided to its tools. It does not silently pull your chat history, inbox, contacts, or calendar.</p></div>
-  <div class="pricing"><div class="card"><p class="muted">01 / DISCOVER</p><h2>Spot high-intent buyers in supplied messages</h2><p>Score messages for real buying signals and urgency.</p></div><div class="card"><p class="muted">02 / ACT</p><h2>Know exactly who to reply to</h2><p>Identify waiting conversations and prepare grounded drafts.</p></div><div class="card"><p class="muted">03 / GROW</p><h2>Make every follow-up count</h2><p>Review a focused briefing and prepare meeting options.</p></div></div><h2>Everything your sales pipeline needs</h2><ul><li>Lead scoring from supplied message data</li><li>Reply triage</li><li>Follow-up drafting</li><li>Booking preparation using supplied availability</li><li>Daily sales briefings</li></ul>
+<section class="lp-hero">
+  <p class="pill" style="display:inline-block">INTRODUCING LEADPILOT AI · EARLY ACCESS</p>
+  <h1>The sales opportunity <span class="lp-gradient">hiding in your inbox.</span></h1>
+  <p class="lp-sub">One focused workspace to spot promising enquiries, prioritize the next reply, and turn inbox chaos into clear sales actions.</p>
+  <div class="lp-actions"><a class="cta" href="/signup">Get started free →</a><a class="lp-outline" href="/workspace-preview">Explore the interactive demo →</a></div>
+  <p class="lp-trust">✓ Human-reviewed replies &nbsp; · &nbsp; ✓ No automatic sending &nbsp; · &nbsp; ✓ Privacy-conscious workflow</p>
+  <div class="lp-monitor" aria-label="Illustrative LeadPilot workspace preview">
+    <div class="lp-top"><span class="lp-dot"></span><span class="lp-dot"></span><span class="lp-dot"></span><span style="margin-left:12px">LEADPILOT / WORKSPACE PREVIEW</span></div>
+    <div class="lp-body"><div class="lp-side"><div class="active">◈ Overview</div><div>▤ Inbox signals</div><div>✧ Follow-ups</div><div>◷ Activity</div></div>
+    <div class="lp-main"><h2>Sales overview</h2><div class="muted">Your next best actions, at a glance.</div>
+      <div class="lp-kpis"><div class="lp-kpi"><strong>12</strong><small>Messages scanned</small></div><div class="lp-kpi"><strong>3</strong><small>Possible leads</small></div><div class="lp-kpi"><strong>2</strong><small>Need a reply</small></div></div>
+      <div class="muted" style="margin-bottom:10px">PRIORITY INQUIRIES</div>
+      <div class="lp-lead"><div><b>Website project enquiry</b><small>“Could you send a quote this week?”</small></div><span class="lp-signal">✦ HIGH INTENT</span></div>
+      <div class="lp-lead"><div><b>Consultation request</b><small>“Are you available for a call?”</small></div><span class="lp-signal">✦ FOLLOW UP</span></div>
+      <div class="lp-note">Illustrative sample data — not live customer analytics.</div>
+    </div></div>
+  </div>
+</section>
+<section class="lp-section"><p class="pill" style="display:inline-block">DISCOVER · PRIORITIZE · FOLLOW UP</p><h2>Less inbox noise. More meaningful conversations.</h2><div class="pricing"><div class="card"><p class="muted">01 / DISCOVER</p><h2>Find buying signals</h2><p>Spot messages asking for quotes, pricing, demos and services.</p></div><div class="card"><p class="muted">02 / PRIORITIZE</p><h2>Know who needs you</h2><p>Review high-intent enquiries and conversations awaiting replies.</p></div><div class="card"><p class="muted">03 / ACT</p><h2>Reply with confidence</h2><p>Prepare grounded follow-up drafts that you review before sending.</p></div></div></section>
 `);
 
 export const privacyPage = page('Privacy Policy', `

@@ -25,7 +25,6 @@ jobs:
       - run: node paystack.test.js
 
   neon-integration:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/leadpilot-usd-billing'
     runs-on: ubuntu-latest
     defaults:
       run:

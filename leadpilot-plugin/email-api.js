@@ -1,5 +1,6 @@
 import { ImapFlow } from 'imapflow';
 import { getAuthenticatedAccount } from './account-api.js';
+import { getPool } from './database.js';
 import { findLeads, draftFollowups } from './core.js';
 
 const providers=Object.freeze({
@@ -43,6 +44,7 @@ export async function emailApi(req,res,path){
    }}
   }finally{lock.release();}
   const ranked=findLeads({messages});
+  if(ranked.length){const {rows}=await getPool().query('SELECT * FROM leadpilot_private.consume_usage($1,$2,$3)',[account.id,'monthlyLeads',ranked.length]);if(!rows[0]?.allowed){reply(res,429,{error:'Monthly lead allowance reached. Upgrade to scan more leads.'});return;}}
   reply(res,200,{scanned:messages.length,leads:ranked,drafts:draftFollowups({leads:ranked.slice(0,5).map(m=>({...m,last_message:m.text}))}),note:'Review all drafts before sending. This scan does not send or store email.'});
  }catch(e){console.error('[leadpilot] email scan failed',e.code||e.message);reply(res,503,{error:'Unable to scan inbox. Check provider settings, app password and IMAP access.'});}
  finally{if(client)try{await client.logout();}catch{}}

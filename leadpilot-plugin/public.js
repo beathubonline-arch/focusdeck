@@ -55,3 +55,16 @@ export const pricingPage = page('Pricing', `
  </section>
  <div class="card"><strong>Early access</strong><p>LeadPilot currently provides lead scoring, reply triage, draft follow-ups, booking preparation and sales summaries from information you supply. Paid checkout, accounts and automatic sending are not yet available.</p><a class="cta" href="/">Explore LeadPilot</a></div>
 `);
+
+export const dashboardPreviewPage = page('Workspace Preview', `
+ <p class="pill" style="display:inline-block">WORKSPACE PREVIEW · DEMO DATA ONLY</p>
+ <h1>Your sales command center, <span style="color:#75ffc0">beautifully simple.</span></h1>
+ <p>Preview the upcoming LeadPilot workspace. The numbers below are illustrative—not real leads, messages or revenue. Account login and persistent data are still being built.</p>
+ <div class="pricing">
+  <div class="card"><p class="muted">Leads to prioritize</p><div class="price">12</div><p>Illustrative sample</p></div>
+  <div class="card"><p class="muted">Replies awaiting attention</p><div class="price">4</div><p>Illustrative sample</p></div>
+  <div class="card"><p class="muted">Follow-up drafts</p><div class="price">8</div><p>Illustrative sample</p></div>
+  <div class="card"><p class="muted">Booking options</p><div class="price">3</div><p>Illustrative sample</p></div>
+ </div>
+ <div class="card"><h2>Five tools. One focused workflow.</h2><p>Prioritize → Reply → Follow up → Prepare bookings → Review your sales briefing.</p><p class="muted">No customer information is loaded in this preview. The live MCP tools continue to operate only on explicitly supplied context.</p><a class="cta" href="/pricing">Explore plans</a></div>
+`);

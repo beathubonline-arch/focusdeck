@@ -10,8 +10,8 @@ export function getPool(){
 export async function databaseStatus(){
  if(!databaseConfigured()) return {configured:false,connected:false};
  try {
-  const r=await getPool().query('select 1 as ok');
-  return {configured:true,connected:r.rows[0]?.ok===1};
+  const r=await getPool().query("select to_regclass('leadpilot_private.accounts') is not null as schema_ready");
+  return {configured:true,connected:true,schema_ready:r.rows[0]?.schema_ready===true};
  } catch {
   return {configured:true,connected:false};
  }

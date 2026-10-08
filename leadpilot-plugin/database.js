@@ -10,8 +10,8 @@ export function getPool(){
 export async function databaseStatus(){
  if(!databaseConfigured()) return {configured:false,connected:false};
  try {
-  const r=await getPool().query("select to_regclass('leadpilot_private.accounts') is not null as schema_ready");
-  return {configured:true,connected:true,schema_ready:r.rows[0]?.schema_ready===true};
+  const r=await getPool().query("select to_regclass('leadpilot_private.accounts') is not null as schema_ready, to_regprocedure('leadpilot_private.consume_usage(uuid,text,integer)') is not null as quota_ready");
+  return {configured:true,connected:true,schema_ready:r.rows[0]?.schema_ready===true,quota_ready:r.rows[0]?.quota_ready===true};
  } catch {
   return {configured:true,connected:false};
  }

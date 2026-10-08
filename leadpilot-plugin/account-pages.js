@@ -36,7 +36,7 @@ export const accountPage=page('Sales workspace',`
  <script>
  const state=document.getElementById('account-state'),results=document.getElementById('results'),usage=document.getElementById('usage'),button=document.getElementById('logout');
  async function refreshUsage(){
- try{const r=await fetch('/api/usage',{credentials:'same-origin'});if(r.ok){const d=await r.json();const counts=Object.fromEntries(d.usage.map(x=>[x.metric,Number(x.used)]));const tier=d.subscription?.status==='active'||d.subscription?.status==='trialing'?d.subscription.plan:'free';const caps={free:[25,10],pro:[500,200],business:[3000,1500],agency:[15000,7500]};const limits=caps[tier]||caps.free;usage.textContent='Plan: '+tier+' · This month: '+(counts.monthlyLeads||0)+'/'+limits[0]+' leads · '+(counts.monthlyDrafts||0)+'/'+limits[1]+' drafts.';}}
+ try{const r=await fetch('/api/usage',{credentials:'same-origin'});if(r.ok){const d=await r.json();const counts=Object.fromEntries(d.usage.map(x=>[x.metric,Number(x.used)]));const expires=d.subscription?.period_ends_at;const valid=!expires||Date.parse(expires)>Date.now();const tier=((d.subscription?.status==='active'||d.subscription?.status==='trialing')&&valid)?d.subscription.plan:'free';const caps={free:[25,10],pro:[500,200],business:[3000,1500],agency:[15000,7500]};const limits=caps[tier]||caps.free;usage.textContent='Plan: '+tier+' · This month: '+(counts.monthlyLeads||0)+'/'+limits[0]+' leads · '+(counts.monthlyDrafts||0)+'/'+limits[1]+' drafts.';}}
  catch{usage.textContent='Usage currently unavailable';}
  }
  fetch('/api/me',{credentials:'same-origin'}).then(async r=>{
@@ -51,7 +51,7 @@ export const accountPage=page('Sales workspace',`
  results.textContent='Processing…';
  try{
  const r=await fetch(ranking?'/api/leads/rank':'/api/followups/draft',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify(payload)});
- const d=await r.json();results.textContent=r.ok?JSON.stringify(ranking?d.leads:d.drafts,null,2):(d.error||'Request failed');if(r.status===429){document.getElementById('upgrade-notice').textContent='Free allowance reached. View paid plans above; checkout will be available once enabled.';document.getElementById('upgrade-plans').scrollIntoView({behavior:'smooth'});}refreshUsage();
+ const d=await r.json();results.textContent=r.ok?JSON.stringify(ranking?d.leads:d.drafts,null,2):(d.error||'Request failed');if(r.status===429){document.getElementById('upgrade-notice').textContent='Free allowance reached. Choose an upgrade above if checkout is enabled.';document.getElementById('upgrade-plans').scrollIntoView({behavior:'smooth'});}refreshUsage();
  }catch{results.textContent='Service unavailable. Please retry.';}
  }
  const upgradeNotice=document.getElementById('upgrade-notice');
@@ -64,7 +64,7 @@ export const accountPage=page('Sales workspace',`
   history.replaceState(null,'','/account');
  }
  fetch('/api/billing/config').then(r=>r.json()).then(d=>{
-  upgradeNotice.textContent=d.enabled?'Secure Paystack checkout available. Each payment buys 30 days; renewal is manual.':'Payments are not enabled yet. Please do not send money.';
+  if(!returnedReference)upgradeNotice.textContent=d.enabled?'Secure Paystack checkout available. Each payment buys 30 days; renewal is manual.':'Payments are not enabled yet. Please do not send money.';
   document.querySelectorAll('[data-plan]').forEach(b=>b.disabled=!d.enabled);
  }).catch(()=>{upgradeNotice.textContent='Checkout unavailable.';document.querySelectorAll('[data-plan]').forEach(b=>b.disabled=true);});
  document.querySelectorAll('[data-plan]').forEach(b=>b.addEventListener('click',async()=>{

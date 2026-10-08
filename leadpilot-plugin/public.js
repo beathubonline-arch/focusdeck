@@ -10,14 +10,14 @@ h1{font-size:clamp(40px,6vw,78px);line-height:1.04;letter-spacing:-.065em;max-wi
 nav{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;margin-top:65px;padding-top:25px;border-top:1px solid #ffffff24}nav a{color:#b4d9c7;text-decoration:none}nav a:hover{color:#79ffc1}
 ul{padding-left:23px}li{padding:4px 0}::selection{background:#55e5aa;color:#062018}
 @media(max-width:600px){.wrap{padding:16px 18px 65px}header{margin-bottom:60px}.pill{font-size:10px;padding:7px 9px}.card{padding:20px}.pricing{grid-template-columns:1fr 1fr;gap:10px}.pricing .card{padding:16px}.pricing .card h2{font-size:20px}.price{font-size:34px}p,li{font-size:14px}}@media(max-width:380px){.pricing{grid-template-columns:1fr}}
-</style></head><body><div class="wrap"><header><div class="brand">LeadPilot AI</div><div class="pill">Sales follow-up assistant</div></header>${body}<nav><a href="/">Home</a><a href="/pricing">Pricing</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/support">Support</a><a href="/health">Status</a></nav></div></body></html>`;
+</style></head><body><div class="wrap"><header><div class="brand">LeadPilot AI</div><div class="pill">Sales follow-up assistant</div></header>${body}<nav><a href="/">Home</a><a href="/pricing">Pricing</a><a href="/workspace-preview">Try workspace</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/support">Support</a><a href="/health">Status</a></nav></div></body></html>`;
 }
 
 export const homePage = page('Home', `
   <p class="pill" style="display:inline-block;margin-bottom:22px">YOUR AI SALES EMPLOYEE · AVAILABLE 24/7</p><h1>Every lead matters. <span style="color:#6df5b6">Never miss the next sale.</span></h1>
   <p>LeadPilot AI helps identify high-intent prospects, surface conversations waiting for a reply, draft grounded follow-ups, prepare booking options from verified availability, and summarize sales activity.</p>
-  <div class="card"><strong>Privacy-first MVP</strong><p>LeadPilot only processes information explicitly provided to its tools. It does not silently pull your chat history, inbox, contacts, or calendar.</p></div>
-  <h2>Everything your sales pipeline needs</h2><ul><li>Lead scoring from supplied message data</li><li>Reply triage</li><li>Follow-up drafting</li><li>Booking preparation using supplied availability</li><li>Daily sales briefings</li></ul>
+  <p><a class="cta" href="/workspace-preview">Try the interactive demo →</a> <a href="/pricing" style="margin-left:16px">Explore plans</a></p><div class="card"><strong>Privacy-first MVP</strong><p>LeadPilot only processes information explicitly provided to its tools. It does not silently pull your chat history, inbox, contacts, or calendar.</p></div>
+  <div class="pricing"><div class="card"><p class="muted">01 / DISCOVER</p><h2>Find buyers hiding in your inbox</h2><p>Score messages for real buying signals and urgency.</p></div><div class="card"><p class="muted">02 / ACT</p><h2>Know exactly who to reply to</h2><p>Identify waiting conversations and prepare grounded drafts.</p></div><div class="card"><p class="muted">03 / GROW</p><h2>Make every follow-up count</h2><p>Review a focused briefing and prepare meeting options.</p></div></div><h2>Everything your sales pipeline needs</h2><ul><li>Lead scoring from supplied message data</li><li>Reply triage</li><li>Follow-up drafting</li><li>Booking preparation using supplied availability</li><li>Daily sales briefings</li></ul>
 `);
 
 export const privacyPage = page('Privacy Policy', `

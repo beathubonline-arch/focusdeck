@@ -1,5 +1,6 @@
 import { createServer as createHttpServer } from 'node:http';
 import { databaseStatus, closeDatabase } from './database.js';
+import { accountApi } from './account-api.js';
 import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import * as z from 'zod/v4';
@@ -122,6 +123,10 @@ const httpServer=createHttpServer((req,res)=>{
       domain_challenge_ready:true
     }));
     return;
+  }
+
+  if(url.pathname.startsWith('/api/')){
+    void accountApi(req,res,url.pathname);return;
   }
 
   if(url.pathname!=='/mcp'){

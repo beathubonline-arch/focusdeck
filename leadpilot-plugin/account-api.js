@@ -1,6 +1,7 @@
 import { randomUUID, createHash } from 'node:crypto';
 import { getPool } from './database.js';
 import { hashPassword, verifyPassword } from './auth.js';
+import { findLeads, draftFollowups } from './core.js';
 
 const digest = token => createHash('sha256').update(token).digest('hex');
 const cookieName='leadpilot_session';
@@ -65,6 +66,27 @@ export async function accountApi(req,res,path){
   if(path==='/api/me'&&req.method==='GET'){
    const user=await account(req);if(!user){respond(res,401,{authenticated:false});return true;}
    respond(res,200,{authenticated:true,email:user.email,id:user.id});return true;
+  }
+  if((path==='/api/leads/rank'||path==='/api/followups/draft')&&req.method==='POST'){
+   const user=await account(req);
+   if(!user){respond(res,401,{error:'Sign in required'});return true;}
+   const data=await body(req);
+   const ranking=path==='/api/leads/rank',items=ranking?data.messages:data.leads;
+   if(!Array.isArray(items)||items.length<1||items.length>100||items.some(x=>!x||typeof x!=='object'||Array.isArray(x))){
+    respond(res,400,{error:'Provide 1 to 100 valid items'});return true;
+   }
+   const metric=ranking?'monthlyLeads':'monthlyDrafts';
+   const {rows}=await getPool().query('SELECT * FROM leadpilot_private.consume_usage($1,$2,$3)',[user.id,metric,items.length]);
+   const usage=rows[0];
+   if(!usage.allowed){respond(res,429,{error:'Monthly plan limit reached',usage});return true;}
+   respond(res,200,{...(ranking?{leads:findLeads({messages:items})}:{drafts:draftFollowups({leads:items})}),usage});
+   return true;
+  }
+  if(path==='/api/usage'&&req.method==='GET'){
+   const user=await account(req);
+   if(!user){respond(res,401,{error:'Sign in required'});return true;}
+   const {rows}=await getPool().query(`SELECT metric,used FROM leadpilot_private.usage WHERE account_id=$1 AND period_start=date_trunc('month',now() AT TIME ZONE 'UTC')::date`,[user.id]);
+   respond(res,200,{usage:rows});return true;
   }
   if(path==='/api/logout'&&req.method==='POST'){
    const user=await account(req);

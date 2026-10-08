@@ -1,4 +1,5 @@
 import { createServer as createHttpServer } from 'node:http';
+import { databaseStatus, closeDatabase } from './database.js';
 import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import * as z from 'zod/v4';
@@ -105,6 +106,14 @@ const httpServer=createHttpServer((req,res)=>{
     res.end(pages.get(url.pathname)); return;
   }
 
+  if(req.method==='GET' && url.pathname==='/health/database'){
+    void databaseStatus().then(status=>{
+      res.writeHead(status.connected?200:503,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});
+      res.end(JSON.stringify(status));
+    });
+    return;
+  }
+
   if(url.pathname==='/health'){
     res.writeHead(200,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});
     res.end(JSON.stringify({
@@ -124,6 +133,6 @@ const httpServer=createHttpServer((req,res)=>{
 });
 
 httpServer.listen(PORT,HOST,()=>console.error(`[leadpilot-ai] v${VERSION} listening on ${HOST}:${PORT}`));
-async function shutdown(){await handler.close();httpServer.close(()=>process.exit(0));}
+async function shutdown(){await closeDatabase();await handler.close();httpServer.close(()=>process.exit(0));}
 process.on('SIGTERM',shutdown);
 process.on('SIGINT',shutdown);

@@ -28,6 +28,7 @@ export const accountPage=page('Sales workspace',`
  <p id="account-state">Checking your account…</p>
  <div class="card"><h2>Plans & upgrades</h2><p>Choose the plan that fits your business. Upgrade at any time.</p><div id="upgrade-plans"><button class="cta" data-plan="pro" style="border:0;cursor:pointer">Pro $9 / 30 days</button> <button class="cta" data-plan="business" style="border:0;cursor:pointer">Business $29 / 30 days</button> <button class="cta" data-plan="agency" style="border:0;cursor:pointer">Agency $79 / 30 days</button></div><p id="upgrade-notice" aria-live="polite" class="muted">Checking secure checkout availability…</p></div>
  <div class="card"><h2>Connect your email inbox</h2><p><a id="google-connect" class="cta" href="/api/google/connect" style="display:none">Connect with Google</a> <button id="google-scan" type="button" style="display:none">Scan Gmail</button></p><p id="google-note" aria-live="polite"></p><p>For Gmail, use the secure Google connection above and click Scan Gmail. Other providers can use app-specific passwords below. Outlook requires OAuth and is not yet connected.</p><details><summary>Other email providers (IMAP)</summary><form id="email-form" style="display:grid;gap:10px;max-width:480px"><label>Provider<select name="provider" required style="padding:12px"><option value="outlook" disabled>Outlook / Microsoft 365 (OAuth coming soon)</option><option value="yahoo">Yahoo</option><option value="icloud">iCloud</option><option value="zoho">Zoho</option><option value="aol">AOL</option><option value="fastmail">Fastmail</option></select></label><label>Email<input name="email" type="email" autocomplete="username" required style="padding:12px"></label><label>App-specific password<input name="appPassword" type="password" autocomplete="off" required style="padding:12px"></label><button class="cta" type="submit">Scan recent inbox messages</button></form><p id="email-status" aria-live="polite">Your credentials are used only for this scan.</p></details></div>
+ <div class="card"><h2>Sales inbox</h2><p>Qualified leads, messages needing review, and ignored notifications. Drafts are suggestions only; no email is sent.</p><div id="inbox-summary" aria-live="polite">Scan Gmail to see your sales inbox.</div><div id="inbox-cards"></div><p><button id="scan-history" type="button">Load scan history</button> <button id="disconnect-gmail" type="button">Disconnect Gmail</button></p><div id="history-list" aria-live="polite"></div></div>
  <div class="pricing">
  <section class="card"><h2>Rank sales leads</h2><p>Paste one prospect message per line. Each submitted message counts toward your monthly lead allowance.</p><textarea id="lead-input" rows="7" placeholder="Hi, can you send your pricing?\\nI'd like to book a demo tomorrow." style="width:100%;padding:14px;border-radius:12px;background:#0d2020;color:white;border:1px solid #567469"></textarea><p><button id="rank" class="cta" style="border:0;cursor:pointer">Rank leads</button></p></section>
  <section class="card"><h2>Draft follow-ups</h2><p>Enter one prospect message per line. Drafts are suggestions only; nothing is sent.</p><textarea id="draft-input" rows="7" placeholder="Could you send me a quote?" style="width:100%;padding:14px;border-radius:12px;background:#0d2020;color:white;border:1px solid #567469"></textarea><p><button id="draft" class="cta" style="border:0;cursor:pointer">Prepare drafts</button></p></section>
@@ -62,7 +63,28 @@ export const accountPage=page('Sales workspace',`
  }).catch(()=>{});
  document.getElementById('google-scan').addEventListener('click',async()=>{
   const note=document.getElementById('google-note');note.textContent='Scanning Gmail…';
-  try{const r=await fetch('/api/google/scan',{method:'POST',credentials:'same-origin'});const type=r.headers.get('content-type')||'';if(!type.includes('application/json'))throw Error('LeadPilot server is temporarily unavailable or deploying. Wait a moment and retry.');const d=await r.json();if(!r.ok)throw Error(d.error||'Scan failed');results.textContent=JSON.stringify({leads:d.leads,drafts:d.drafts},null,2);note.textContent='Scanned '+d.scanned+' messages · '+(d.qualified??d.leads?.length??0)+' qualified · '+(d.excluded??0)+' excluded.';}catch(e){note.textContent=e.message;}
+  try{const r=await fetch('/api/google/scan',{method:'POST',credentials:'same-origin'});const type=r.headers.get('content-type')||'';if(!type.includes('application/json'))throw Error('LeadPilot server is temporarily unavailable or deploying. Wait a moment and retry.');const d=await r.json();if(!r.ok)throw Error(d.error||'Scan failed');results.textContent=JSON.stringify({leads:d.leads,drafts:d.drafts},null,2);renderInbox(d);note.textContent='Scanned '+d.scanned+' messages · '+(d.qualified??d.leads?.length??0)+' qualified · '+(d.review?.length??0)+' review · '+(d.ignored?.length??0)+' ignored.';}catch(e){note.textContent=e.message;}
+ });
+ function renderInbox(data){
+  const summary=document.getElementById('inbox-summary'),cards=document.getElementById('inbox-cards');
+  summary.textContent='Qualified: '+(data.leads||[]).length+' · Needs review: '+(data.review||[]).length+' · Ignored: '+(data.ignored||[]).length;
+  cards.replaceChildren();
+  for(const [label,items] of [['Qualified',data.leads||[]],['Needs Review',data.review||[]],['Ignored',data.ignored||[]]]){
+   const section=document.createElement('details');section.open=label==='Qualified';const heading=document.createElement('summary');heading.textContent=label+' ('+items.length+')';section.append(heading);
+   for(const item of items.slice(0,50)){const p=document.createElement('p');p.style.cssText='padding:12px;border-bottom:1px solid #34574a;overflow-wrap:anywhere';const title=document.createElement('strong');title.textContent=(item.name||item.from||item.email||'Unknown')+' — '+(item.subject||'No subject');p.append(title);
+    const info=document.createElement('div');info.textContent=(item.reason||item.nextAction||'')+' '+(item.text||'').slice(0,200);p.append(info);
+    const draft=(data.drafts||[]).find(x=>x.id===item.id);if(draft){const b=document.createElement('button');b.textContent='Copy suggested reply';b.addEventListener('click',()=>navigator.clipboard.writeText(draft.draft));p.append(b);}
+    section.append(p);}
+   cards.append(section);
+  }
+ }
+ document.getElementById('scan-history').addEventListener('click',async()=>{
+  const node=document.getElementById('history-list');node.textContent='Loading history…';
+  try{const r=await fetch('/api/google/history',{credentials:'same-origin'}),d=await r.json();if(!r.ok)throw Error(d.error||'History unavailable');node.replaceChildren();for(const s of d.scans||[]){const b=document.createElement('button');b.style.margin='6px';b.textContent=new Date(s.created_at).toLocaleString()+' — '+s.qualified+' leads';b.addEventListener('click',()=>renderInbox(s.results));node.append(b);}if(!d.scans?.length)node.textContent='No saved scans yet.';}catch(e){node.textContent=e.message;}
+ });
+ document.getElementById('disconnect-gmail').addEventListener('click',async()=>{
+  if(!confirm('Disconnect Gmail? Previously saved scan history will remain.'))return;
+  const r=await fetch('/api/google/disconnect',{method:'POST',credentials:'same-origin'});if(r.ok)location.reload();
  });
  const upgradeNotice=document.getElementById('upgrade-notice');
  const returnedReference=new URLSearchParams(location.search).get('reference');

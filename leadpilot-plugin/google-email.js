@@ -1,5 +1,6 @@
 import {createHmac,randomBytes,createCipheriv,createDecipheriv,createHash,timingSafeEqual} from 'node:crypto';
 import {getAuthenticatedAccount} from './account-api.js';
+import {getPool} from './database.js';
 import {findLeads,draftFollowups} from './core.js';
 import {filterSalesInbox} from './email-filter.js';
 import {saveConnection,loadConnection,deleteConnection,saveScan,recentScans} from './gmail-store.js';
@@ -87,7 +88,10 @@ export async function googleEmailApi(req,res,path,url){
    let access;try{const token=unseal(cookie(req,'lp_google'));if(token.id===user.id&&token.exp>Date.now()+30000)access=token.access;}catch{}
    if(!access)access=await refreshAccess(user.id);
    if(!access)throw Error('Connect Gmail first');
-   const result=await scan(access);await saveScan(user.id,result);json(res,200,result);return;
+   const result=await scan(access);
+   const count=result.leads.length;
+   if(count>0){const {rows}=await getPool().query('SELECT * FROM leadpilot_private.consume_usage($1,$2,$3)',[user.id,'monthlyLeads',count]);if(!rows[0]?.allowed){json(res,429,{error:'Monthly lead allowance reached. Upgrade to scan more leads.'});return;}}
+   await saveScan(user.id,result);json(res,200,result);return;
   }
   if(path==='/api/google/history'&&req.method==='GET'){const user=await getAuthenticatedAccount(req);if(!user){json(res,401,{error:'Sign in required'});return;}json(res,200,{scans:await recentScans(user.id)});return;}
   if(path==='/api/google/disconnect'&&req.method==='POST'){

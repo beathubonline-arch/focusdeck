@@ -110,7 +110,7 @@ const httpServer=createHttpServer((req,res)=>{
 
   if(req.method==='GET' && url.pathname==='/health/database'){
     void databaseStatus().then(status=>{
-      res.writeHead(status.connected?200:503,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});
+      res.writeHead(status.connected&&status.schema_ready&&status.quota_ready?200:503,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});
       res.end(JSON.stringify(status));
     });
     return;

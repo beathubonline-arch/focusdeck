@@ -1,6 +1,7 @@
 import { createServer as createHttpServer } from 'node:http';
 import { databaseStatus, closeDatabase } from './database.js';
 import { accountApi } from './account-api.js';
+import { billingApi } from './billing-api.js';
 import { signupPage, loginPage, accountPage } from './account-pages.js';
 import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import { toNodeHandler } from '@modelcontextprotocol/node';
@@ -126,6 +127,9 @@ const httpServer=createHttpServer((req,res)=>{
     return;
   }
 
+  if(url.pathname.startsWith('/api/billing/')||url.pathname==='/api/paystack/webhook'){
+    void billingApi(req,res,url.pathname,url);return;
+  }
   if(url.pathname.startsWith('/api/')){
     void accountApi(req,res,url.pathname);return;
   }

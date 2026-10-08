@@ -1,6 +1,7 @@
 import {createHmac,randomBytes,createCipheriv,createDecipheriv,createHash,timingSafeEqual} from 'node:crypto';
 import {getAuthenticatedAccount} from './account-api.js';
 import {findLeads,draftFollowups} from './core.js';
+import {filterSalesInbox} from './email-filter.js';
 const BASE='https://leadpilot-ai-beathub.onrender.com';
 const SCOPE='https://www.googleapis.com/auth/gmail.readonly';
 const key=()=>createHash('sha256').update(process.env.LEADPILOT_OAUTH_SECRET||'').digest();
@@ -22,8 +23,9 @@ async function scan(token){
   const header=n=>headers.find(h=>h.name.toLowerCase()===n)?.value||'';
   messages.push({id:item.id,from:header('from'),subject:header('subject'),date:header('date'),text:msg.snippet||'',direction:'inbound'});
  }
- const leads=findLeads({messages});
- return {scanned:messages.length,leads,drafts:draftFollowups({leads:leads.slice(0,5).map(m=>({...m,last_message:m.text}))}),note:'Read-only Gmail access. No emails were sent.'};
+ const {candidates,excluded}=filterSalesInbox(messages);
+ const leads=findLeads({messages:candidates});
+ return {scanned:messages.length,qualified:candidates.length,excluded:excluded.length,leads,drafts:draftFollowups({leads:leads.slice(0,5).map(m=>({...m,last_message:m.text}))}),note:'Read-only Gmail access. No emails were sent.'};
 }
 export async function googleEmailApi(req,res,path,url){
  try{

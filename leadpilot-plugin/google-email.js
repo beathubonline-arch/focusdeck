@@ -58,7 +58,7 @@ export async function googleEmailApi(req,res,path,url){
    json(res,200,await scan(token.access));return;
   }
   if(path==='/api/google/disconnect'&&req.method==='POST'){
-   json(res,200,{disconnected:true});return;
+   res.writeHead(200,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','set-cookie':secureCookie('lp_google','',0)});res.end(JSON.stringify({disconnected:true}));return;
   }
   json(res,404,{error:'Not found'});
  }catch(e){console.error('[leadpilot] Google OAuth:',e.message);json(res,503,{error:'Google connection failed or expired. Reconnect and try again.'});}

@@ -1,5 +1,6 @@
 name: LeadPilot CI
 on:
+  workflow_dispatch:
   push:
     branches: [leadpilot-usd-billing, leadpilot-mvp]
   pull_request:
@@ -22,3 +23,23 @@ jobs:
       - run: node pricing.test.js
       - run: node billing-security.test.js
       - run: node paystack.test.js
+
+  neon-integration:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: leadpilot-plugin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts || npm install --ignore-scripts
+      - name: Validate dedicated Neon staging database
+        env:
+          DATABASE_URL: ${{ secrets.LEADPILOT_STAGING_DATABASE_URL }}
+        run: |
+          test -n "$DATABASE_URL" || { echo "Staging database secret missing"; exit 1; }
+          node neon-integration.test.js
+          node account-e2e.test.js

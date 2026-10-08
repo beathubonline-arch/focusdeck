@@ -9,11 +9,12 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node test.js"
+    "test": "node test.js && node account-workspace.test.js"
   },
   "dependencies": {
     "@modelcontextprotocol/node": "^2.0.0",
     "@modelcontextprotocol/server": "^2.0.0",
-    "zod": "^4.1.0"
+    "zod": "^4.1.0",
+    "pg": "^8.16.3"
   }
 }

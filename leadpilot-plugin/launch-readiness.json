@@ -1,0 +1,12 @@
+{
+  "market_ready": false,
+  "live_paid_checkout": false,
+  "verified_customer_auth": false,
+  "webhook_events_persisted": false,
+  "quota_enforcement_connected_to_mcp": false,
+  "db_migrations_applied": false,
+  "subscription_portal_live": false,
+  "production_e2e_tests_twice": false,
+  "marketplace_review_completed": false,
+  "required_next_action": "Choose and authorize a USD-capable billing provider and persistent database before enabling checkout."
+}

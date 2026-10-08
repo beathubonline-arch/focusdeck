@@ -1,9 +1,12 @@
 import { createServer as createHttpServer } from 'node:http';
+import { databaseStatus, closeDatabase } from './database.js';
+import { accountApi } from './account-api.js';
+import { signupPage, loginPage, accountPage } from './account-pages.js';
 import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import * as z from 'zod/v4';
 import { findLeads, needsReply, draftFollowups, prepareBooking, salesBriefing } from './core.js';
-import { homePage, privacyPage, termsPage, supportPage } from './public.js';
+import { homePage, privacyPage, termsPage, supportPage, pricingPage, dashboardPreviewPage } from './public.js';
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -83,7 +86,7 @@ function buildServer() {
 
 const handler=createMcpHandler(buildServer);
 const nodeHandler=toNodeHandler(handler);
-const pages=new Map([['/',homePage],['/privacy',privacyPage],['/terms',termsPage],['/support',supportPage]]);
+const pages=new Map([['/',homePage],['/privacy',privacyPage],['/terms',termsPage],['/support',supportPage],['/pricing',pricingPage],['/workspace-preview',dashboardPreviewPage],['/signup',signupPage],['/login',loginPage],['/account',accountPage]]);
 
 const httpServer=createHttpServer((req,res)=>{
   const url=new URL(req.url||'/',`http://${req.headers.host||'localhost'}`);
@@ -105,6 +108,14 @@ const httpServer=createHttpServer((req,res)=>{
     res.end(pages.get(url.pathname)); return;
   }
 
+  if(req.method==='GET' && url.pathname==='/health/database'){
+    void databaseStatus().then(status=>{
+      res.writeHead(status.connected&&status.schema_ready&&status.quota_ready?200:503,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});
+      res.end(JSON.stringify(status));
+    });
+    return;
+  }
+
   if(url.pathname==='/health'){
     res.writeHead(200,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});
     res.end(JSON.stringify({
@@ -113,6 +124,10 @@ const httpServer=createHttpServer((req,res)=>{
       domain_challenge_ready:true
     }));
     return;
+  }
+
+  if(url.pathname.startsWith('/api/')){
+    void accountApi(req,res,url.pathname);return;
   }
 
   if(url.pathname!=='/mcp'){
@@ -124,6 +139,6 @@ const httpServer=createHttpServer((req,res)=>{
 });
 
 httpServer.listen(PORT,HOST,()=>console.error(`[leadpilot-ai] v${VERSION} listening on ${HOST}:${PORT}`));
-async function shutdown(){await handler.close();httpServer.close(()=>process.exit(0));}
+async function shutdown(){await closeDatabase();await handler.close();httpServer.close(()=>process.exit(0));}
 process.on('SIGTERM',shutdown);
 process.on('SIGINT',shutdown);

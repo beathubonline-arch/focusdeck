@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { PRICING, effectivePlan, canConsume } from './pricing.js';
+import { createHmac } from 'node:crypto';
+import { hashPassword,verifyPassword,issueSession,verifySession } from './auth.js';
+import { verifyHmacSha256, verifiedSubscriptionEvent } from './billing-security.js';
 import {findLeads,needsReply,draftFollowups,prepareBooking,salesBriefing} from './core.js';
-import {homePage,privacyPage,termsPage,supportPage} from './public.js';
+import {homePage,privacyPage,termsPage,supportPage,pricingPage,dashboardPreviewPage} from './public.js';
 
 const now=Date.parse('2026-10-06T02:00:00Z');
 const messages=[
@@ -37,7 +41,27 @@ for(let pass=1;pass<=2;pass++){
  assert.equal(prepareBooking({lead:nr[0],availability:[]}).status,'needs_availability');
  assert.equal(prepareBooking({lead:nr[0],availability:[{start:'2026-10-07T09:00:00+03:00'}]}).status,'ready_to_offer');
  const brief=salesBriefing({leads:messages,conversations},now);assert.equal(brief.lead_count,1);assert.equal(brief.awaiting_reply_count,1);
- for(const p of [homePage,privacyPage,termsPage,supportPage]){assert.ok(p.includes('<!doctype html>'));assert.ok(p.includes('LeadPilot'));}
+ for(const p of [homePage,privacyPage,termsPage,supportPage,pricingPage,dashboardPreviewPage]){assert.ok(p.includes('<!doctype html>'));assert.ok(p.includes('LeadPilot'));}
+ const body=Buffer.from(JSON.stringify({id:'evt_test',type:'subscription.updated'}));
+ const sig=createHmac('sha256','test-only-secret').update(body).digest('hex');
+ assert.equal(verifyHmacSha256(body,sig,'test-only-secret'),true);
+ assert.equal(verifyHmacSha256(Buffer.from('tampered'),sig,'test-only-secret'),false);
+ assert.equal(verifiedSubscriptionEvent(body,sig,'test-only-secret').id,'evt_test');
+ assert.ok(dashboardPreviewPage.includes('PRIVATE BROWSER WORKSPACE'));
+ assert.ok(pricingPage.includes('$79'));
+ assert.ok(pricingPage.includes('payments are not yet enabled'));
+ const pw=hashPassword('correct horse battery staple');
+ assert.equal(verifyPassword('correct horse battery staple',pw),true);
+ assert.equal(verifyPassword('wrong',pw),false);
+ const sid='123e4567-e89b-12d3-a456-426614174000';
+ const token=issueSession(sid,'12345678901234567890123456789012',now);
+ assert.equal(verifySession(token,'12345678901234567890123456789012',now),sid);
+ assert.equal(verifySession(token,'12345678901234567890123456789012',now+86400001),null);
  validateSubmissionPackage();
+ assert.deepEqual(['free','pro','business','agency'].map(p=>PRICING[p].monthlyUsd),[0,9,29,79]);
+ assert.equal(effectivePlan('agency','canceled'),'free');
+ assert.equal(effectivePlan('pro','active'),'pro');
+ assert.equal(canConsume('free','none','monthlyLeads',25),false);
+ assert.equal(canConsume('pro','active','monthlyLeads',499),true);
  console.log(`PASS ${pass}: five tools + policy pages + submission package`);
 }

@@ -1,6 +1,5 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHmac, timingSafeEqual } from 'node:crypto';
 import { PRICING } from './pricing.js';
-import { verifyHmacSha256 } from './billing-security.js';
 
 const PAYSTACK_API='https://api.paystack.co';
 const PAID_PLANS=new Set(['pro','business','agency']);
@@ -34,7 +33,9 @@ export async function createPaystackCheckout({email,plan,accountId,callbackUrl,e
 }
 
 export function validatePaystackWebhook(rawBody, signature, secret) {
-  if(!verifyHmacSha256(rawBody,signature,secret)) throw new Error('Invalid Paystack signature');
+  if(!Buffer.isBuffer(rawBody) || typeof signature!=='string' || !/^[a-f0-9]{128}$/i.test(signature) || !secret) throw new Error('Invalid Paystack signature');
+  const expected=createHmac('sha512',secret).update(rawBody).digest();
+  if(!timingSafeEqual(expected,Buffer.from(signature,'hex'))) throw new Error('Invalid Paystack signature');
   const event=JSON.parse(rawBody.toString('utf8'));
   if(!event || typeof event.event!=='string' || !event.data || typeof event.data!=='object')
     throw new Error('Malformed Paystack event');
